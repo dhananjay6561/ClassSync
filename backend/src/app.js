@@ -28,6 +28,10 @@ app.use('/api/schools', schoolRoutes);
 const schoolContext = require('./middlewares/schoolContext'); 
 app.use(schoolContext);
 
+const scheduleRoutes = require('./routes/scheduleRoutes');
+app.use('/api/schedules', scheduleRoutes);
+
+
 
 
 

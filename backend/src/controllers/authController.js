@@ -25,6 +25,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      schoolId,
     });
     await user.save();
 
