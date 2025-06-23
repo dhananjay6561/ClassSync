@@ -126,6 +126,26 @@ exports.getTeacherSlots = async (req, res) => {
   }
 };
 
+// API for grid-style schedule (for UI rendering)
+exports.getScheduleGrid = async (req, res) => {
+  try {
+    const { teacherId: paramId } = req.params;
+    const isTeacher = req.user.role === 'teacher';
+
+    const teacherId = isTeacher ? req.user.userId : paramId;
+    const schoolId = req.schoolId;
+
+    const slots = await ScheduleSlot.find({ teacherId, schoolId })
+      .select('weekday periodIndex subject classSection') 
+
+    res.json({ grid: slots });
+  } catch (err) {
+    console.error('getScheduleGrid error:', err);
+    res.status(500).json({ message: 'Failed to fetch schedule grid.' });
+  }
+};
+
+
 //This module exports functions for managing schedule slots in a school.
 // It includes functions for assigning, editing, deleting slots, and retrieving schedules for teachers.
 // The functions handle errors, validate inputs, and ensure that operations are performed within the context of a specific school.
