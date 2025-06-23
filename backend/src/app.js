@@ -19,6 +19,9 @@ app.use('/api/auth', authRoutes);
 const schoolRoutes = require('./routes/schoolRoutes');
 app.use('/api/schools', schoolRoutes);
 
+
+
+
 // Auth middleware
 const auth = require('./middlewares/authMiddleware');
 app.use(auth);

@@ -1,49 +1,138 @@
 const ScheduleSlot = require('../models/ScheduleSlot');
+const User = require('../models/User');
 
-// Create or update one or more schedule slots
-exports.setSchedule = async (req, res) => {
+// Admin: Assign a new slot to a teacher
+exports.assignSlot = async (req, res) => {
   try {
-    const { teacherId, slots, schoolId } = req.body;
+    const { teacherId, weekday, periodIndex, subject, classSection } = req.body;
+    const schoolId = req.schoolId;
 
-    if (!schoolId) {
-      return res.status(400).json({ message: 'schoolId is required' });
-    }
+    const teacher = await User.findOne({ _id: teacherId, schoolId });
+    if (!teacher) return res.status(404).json({ message: 'Teacher not found in your school.' });
 
-    await ScheduleSlot.deleteMany({ schoolId, teacherId });
+    const slot = new ScheduleSlot({
+      teacherId,
+      schoolId,
+      weekday,
+      periodIndex,
+      subject,
+      classSection,
+    });
 
-    const newSlots = slots.map(slot => ({ ...slot, teacherId, schoolId }));
-    await ScheduleSlot.insertMany(newSlots);
-
-    res.status(200).json({ message: 'Schedule updated successfully' });
+    await slot.save();
+    res.status(201).json({ message: 'Slot assigned.', slot });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error setting schedule' });
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Slot already assigned to this teacher.' });
+    }
+    console.error('assignSlot error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+// Admin: Edit an existing slot
+exports.editSlot = async (req, res) => {
+  try {
+    const { slotId } = req.params;
+    const { subject, classSection } = req.body;
+    const schoolId = req.schoolId;
 
-// Get a teacher’s weekly schedule
+    const slot = await ScheduleSlot.findOne({ _id: slotId, schoolId });
+    if (!slot) return res.status(404).json({ message: 'Slot not found.' });
+
+    slot.subject = subject;
+    slot.classSection = classSection;
+    await slot.save();
+
+    res.json({ message: 'Slot updated.', slot });
+  } catch (err) {
+    console.error('editSlot error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Admin: Delete a slot
+exports.deleteSlot = async (req, res) => {
+  try {
+    const { slotId } = req.params;
+    const schoolId = req.schoolId;
+
+    const slot = await ScheduleSlot.findOneAndDelete({ _id: slotId, schoolId });
+    if (!slot) return res.status(404).json({ message: 'Slot not found.' });
+
+    res.json({ message: 'Slot deleted.', slot });
+  } catch (err) {
+    console.error('deleteSlot error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Teacher/Admin: Get weekly schedule of a teacher
 exports.getTeacherSchedule = async (req, res) => {
   try {
-    const teacherId = req.params.teacherId || req.user.userId;
-    const schedule = await ScheduleSlot.find({
-      teacherId,
-      schoolId: req.schoolId
-    }).sort({ weekday: 1, periodIndex: 1 });
+    const { teacherId } = req.params;
+    const schoolId = req.schoolId;
 
-    res.json(schedule);
+    const slots = await ScheduleSlot.find({ teacherId, schoolId });
+    res.json({ schedule: slots });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error fetching schedule' });
+    console.error('getTeacherSchedule error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+// Teacher: Get own schedule
+exports.getMySchedule = async (req, res) => {
+  try {
+    const teacherId = req.user.userId;
+    const schoolId = req.schoolId;
 
-//This code defines two functions for managing a teacher's schedule in a school system.
-// The `setSchedule` function allows creating or updating schedule slots for a teacher.
-// It accepts a request body containing the teacher's ID and an array of slots, each with a weekday, period index, subject, and class section.
-// The function deletes any existing schedule slots for that teacher and school, then inserts the new slots into the database.
-// The `getTeacherSchedule` function retrieves a teacher's weekly schedule based on their ID.
-// It fetches all schedule slots for the specified teacher and school, sorting them by weekday and period index.
-// Both functions handle errors and respond with appropriate status codes and messages.
-// The `setSchedule` function is used to set or update a teacher's schedule, while the `getTeacherSchedule` function retrieves a teacher's schedule.
+    const slots = await ScheduleSlot.find({ teacherId, schoolId });
+    res.json({ schedule: slots });
+  } catch (err) {
+    console.error('getMySchedule error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Admin: Get all slots in a school
+exports.getAllSlots = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+
+    const slots = await ScheduleSlot.find({ schoolId })
+      .populate('teacherId', 'name email')
+      .sort({ weekday: 1, periodIndex: 1 });
+    res.json({ slots });
+  } catch (err) {
+    console.error('getAllSlots error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Admin: Get all slots for a specific teacher
+exports.getTeacherSlots = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const schoolId = req.schoolId;
+
+    const slots = await ScheduleSlot.find({ teacherId, schoolId })
+      .populate('teacherId', 'name email')
+      .sort({ weekday: 1, periodIndex: 1 });
+    res.json({ slots });
+  } catch (err) {
+    console.error('getTeacherSlots error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+//This module exports functions for managing schedule slots in a school.
+// It includes functions for assigning, editing, deleting slots, and retrieving schedules for teachers.
+// The functions handle errors, validate inputs, and ensure that operations are performed within the context of a specific school.
+// The ScheduleSlot model is used to interact with the MongoDB database, and the User model is used to validate teacher existence.
+// The functions return appropriate responses based on the success or failure of the operations.
+// The module is designed to be used in a Node.js/Express application, with middleware to handle authentication and authorization.
+// The functions are structured to provide clear and consistent responses, making it easier for frontend applications to
+// consume the API and display relevant information to users.
+//     res.status(201).json({ message: 'Leave applied successfully.', leaveRequest: res.body.leaveRequest });
+//  }); 
