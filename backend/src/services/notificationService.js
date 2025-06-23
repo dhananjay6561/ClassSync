@@ -61,17 +61,25 @@ async function sendLeaveStatusEmail(teacherEmail, teacherName, status, fromDate,
  */
 async function sendSubstitutionAssignedEmail(substituteEmail, substituteName, slotDetails) {
   const { weekday, periodIndex, subject, classSection, dateString } = slotDetails;
+
   const subjectLine = `You’ve been assigned as substitute on ${weekday}, Period ${periodIndex + 1}`;
-const html = `
-  <p>Hi ${teacherName},</p>
-  <p>We wanted to inform you that your leave request from <strong>${formattedFrom}</strong> to <strong>${formattedTo}</strong> has been <strong>${status.toUpperCase()}</strong>.</p>
-  ${adminComment ? `<p><strong>Note from Admin:</strong> ${adminComment}</p>` : ''}
-  <p>If you have any questions, feel free to reach out.</p>
-  <p>Best regards,<br/>AutoSubstitute Team</p>
-`;
+  const html = `
+    <p>Hi ${substituteName},</p>
+    <p>You’ve been assigned to take a substitution class.</p>
+    <ul>
+      <li><strong>Date:</strong> ${dateString}</li>
+      <li><strong>Weekday:</strong> ${weekday}</li>
+      <li><strong>Period:</strong> ${periodIndex + 1}</li>
+      <li><strong>Class & Section:</strong> ${classSection}</li>
+      <li><strong>Subject:</strong> ${subject}</li>
+    </ul>
+    <p>Please be prepared accordingly.</p>
+    <p>Best regards,<br/>AutoSubstitute Team</p>
+  `;
 
   await sendEmail(substituteEmail, subjectLine, html);
 }
+
 
 module.exports = {
   sendLeaveStatusEmail,

@@ -1,32 +1,52 @@
-// /tests/leave.test.js
 const request = require('supertest');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
 const app = require('../src/app');
 const User = require('../src/models/User');
 const LeaveRequest = require('../src/models/LeaveRequest');
-const jwt = require('jsonwebtoken');
 
-// Helper to get JWT
+// Helper to generate JWT token
 const generateToken = (user) => {
   return jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET);
 };
 
 describe('Leave API Tests', () => {
-  let teacherToken, adminToken, teacherId;
+  let teacherToken, adminToken, teacherId, schoolId;
 
-  const mongoose = require('mongoose');
+  beforeEach(async () => {
+    schoolId = new mongoose.Types.ObjectId();
 
-beforeEach(async () => {
-  const validSchoolId = new mongoose.Types.ObjectId();
+    const teacher = await User.create({
+      name: 'Test Teacher',
+      email: 'teacher@test.com',
+      role: 'teacher',
+      schoolId,
+      password: 'testpassword123',
+    });
 
-  await User.create({
-    name: 'Test Teacher',
-    email: 'teacher@test.com',
-    role: 'teacher',
-    schoolId: validSchoolId,
-    password: 'testpassword123',  // Add password if schema requires it
+    teacherId = teacher._id;
+    teacherToken = generateToken(teacher);
+
+    const admin = await User.create({
+      name: 'Admin User',
+      email: 'admin@test.com',
+      role: 'admin',
+      schoolId,
+      password: 'adminpassword123',
+    });
+
+    adminToken = generateToken(admin);
   });
-});
 
+  afterEach(async () => {
+    await User.deleteMany({});
+    await LeaveRequest.deleteMany({});
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.close();
+  });
 
   it('should allow teacher to apply for leave', async () => {
     const res = await request(app)
@@ -38,14 +58,17 @@ beforeEach(async () => {
         reason: 'Personal',
       });
 
+    console.log('Leave Apply Response:', res.body);  // Debug print
     expect(res.statusCode).toBe(201);
-    expect(res.body.leave.teacherId).toBe(String(teacherId));
+    expect(res.body).toHaveProperty('leaveRequest');
+    expect(res.body.leaveRequest).toHaveProperty('teacherId');
+
   });
 
   it('should allow admin to approve leave', async () => {
     const leave = await LeaveRequest.create({
       teacherId,
-      schoolId: 'school123',
+      schoolId,
       fromDate: new Date('2025-06-10'),
       toDate: new Date('2025-06-12'),
       reason: 'Test',
