@@ -20,7 +20,7 @@ beforeEach(async () => {
     email: 'teacher@example.com',
     role: 'teacher',
     schoolId,
-    password: 'Test@1234', // ✅ add this
+    password: 'Test@1234',
   });
   teacherId = teacher._id;
 
@@ -29,7 +29,7 @@ beforeEach(async () => {
     email: 'admin@example.com',
     role: 'admin',
     schoolId,
-    password: 'Test@1234', // ✅ add this too
+    password: 'Test@1234',
   });
 
   teacherToken = generateToken(teacher);
