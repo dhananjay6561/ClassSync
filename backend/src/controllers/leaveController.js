@@ -1,10 +1,10 @@
 const LeaveRequest = require('../models/LeaveRequest');
-const ScheduleSlot = require('../models/ScheduleSlot'); // We'll need this later for substitution
-const Substitution = require('../models/Substitution'); // To be created soon
+const ScheduleSlot = require('../models/ScheduleSlot');
+const Substitution = require('../models/Substitution');
 const { generateSubstitutionsForLeave } = require('../services/substitutionEngine');
 const { sendLeaveStatusEmail } = require('../services/notificationService');
 const User = require('../models/User');
-
+const { logAction } = require('../utils/auditLogger');
 
 // Teacher applies for leave
 exports.applyLeave = async (req, res) => {
@@ -17,7 +17,6 @@ exports.applyLeave = async (req, res) => {
       return res.status(400).json({ message: "'toDate' must be after or equal to 'fromDate'" });
     }
 
-    // Optional: Check if leave overlaps with existing leaves by the same teacher
     const overlappingLeave = await LeaveRequest.findOne({
       teacherId,
       schoolId,
@@ -83,7 +82,6 @@ exports.updateLeaveStatus = async (req, res) => {
     if (adminComment) leaveRequest.adminComment = adminComment;
     await leaveRequest.save();
 
-    // Notify teacher about leave status
     const teacher = await User.findById(leaveRequest.teacherId);
     if (teacher && teacher.email) {
       await sendLeaveStatusEmail(
@@ -96,9 +94,7 @@ exports.updateLeaveStatus = async (req, res) => {
       );
     }
 
-    // If approved, assign substitutes
     if (status === 'approved') {
-      // existing call to substitution engine
       const createdSubs = await generateSubstitutionsForLeave(
         leaveRequest.schoolId,
         leaveRequest.teacherId,
@@ -106,15 +102,10 @@ exports.updateLeaveStatus = async (req, res) => {
         leaveRequest.toDate
       );
 
-      // Notify substitutes
       for (const sub of createdSubs) {
-        // Fetch substitute teacher details
         const subTeacher = await User.findById(sub.substituteTeacherId);
-        // Fetch slot details (weekday, periodIndex, classSection, subject)
         const slot = await ScheduleSlot.findById(sub.scheduleSlotId);
         if (subTeacher && slot) {
-          // Determine a human‐readable date for this slot
-          // Simplify by picking the first date in the leave that matches this weekday
           const leaveDates = [];
           for (
             let d = new Date(leaveRequest.fromDate);
@@ -145,14 +136,21 @@ exports.updateLeaveStatus = async (req, res) => {
       }
     }
 
+    // ✅ Log the leave status update action
+    await logAction({
+      req,
+      action: `leave_${status}`,
+      targetId: leaveRequest._id,
+      details: {
+        comment: adminComment || '',
+        fromDate: leaveRequest.fromDate,
+        toDate: leaveRequest.toDate
+      }
+    });
+
     res.json({ message: `Leave request ${status}.`, leaveRequest });
   } catch (err) {
     console.error('updateLeaveStatus error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
-
-
-
-
-// Teacher views their own leave requests
