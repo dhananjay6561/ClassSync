@@ -40,5 +40,9 @@ app.use('/api/substitutions', substitutionRoutes);
 const leaveRoutes = require('./routes/leaveRoutes');
 app.use('/api/leaves', leaveRoutes);
 
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api/dashboard', dashboardRoutes);
+
+
 
 module.exports = app;
