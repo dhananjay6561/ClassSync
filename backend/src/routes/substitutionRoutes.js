@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getMySubstitutions,
   getAllSubstitutions,
+  getSubstitutionHistory
 } = require('../controllers/substitutionController');
 const auth = require('../middlewares/authMiddleware');
 const permit = require('../middlewares/roleMiddleware');
@@ -13,7 +14,11 @@ router.get('/mine', auth, permit('teacher'), getMySubstitutions);
 // Admin views all substitutions for the school
 router.get('/all', auth, permit('admin'), getAllSubstitutions);
 
+// Admin views full substitution history with optional filters
+router.get('/history', auth, permit('admin'), getSubstitutionHistory);
+
 module.exports = router;
+
 // This code defines the routes for managing teacher substitutions in a school system.
 // It imports necessary modules and middleware, sets up routes for teachers to view their own substitutions and admins to view all substitutions in the school,
 // and exports the router for use in the main application.

@@ -47,6 +47,48 @@ exports.getAllSubstitutions = async (req, res) => {
   }
 };
 
+// Admin: Get substitution history with optional date range
+exports.getSubstitutionHistory = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const { from, to } = req.query;
+
+    const dateFilter = {};
+    if (from) dateFilter.createdAt = { $gte: new Date(from) };
+    if (to) dateFilter.createdAt = { ...dateFilter.createdAt, $lte: new Date(to) };
+
+    const substitutions = await Substitution.find(dateFilter)
+      .populate('originalTeacherId', 'name email')
+      .populate('substituteTeacherId', 'name email')
+      .populate('scheduleSlotId');
+
+    const filtered = substitutions.filter(sub => 
+      sub.scheduleSlotId?.schoolId?.toString() === schoolId.toString()
+    );
+
+    const result = filtered.map(sub => ({
+      date: sub.createdAt.toISOString().split('T')[0],
+      period: sub.scheduleSlotId?.periodIndex + 1,
+      weekday: sub.scheduleSlotId?.weekday,
+      subject: sub.scheduleSlotId?.subject,
+      classSection: sub.scheduleSlotId?.classSection,
+      reason: sub.reason,
+      originalTeacher: {
+        name: sub.originalTeacherId?.name || 'N/A',
+        email: sub.originalTeacherId?.email || 'N/A'
+      },
+      substituteTeacher: {
+        name: sub.substituteTeacherId?.name || 'N/A',
+        email: sub.substituteTeacherId?.email || 'N/A'
+      }
+    }));
+
+    res.json({ count: result.length, history: result });
+  } catch (err) {
+    console.error('Substitution History Error:', err);
+    res.status(500).json({ message: 'Failed to fetch substitution history' });
+  }
+};
 
 
 //This code defines two functions for managing teacher substitutions in a school system.
