@@ -83,11 +83,43 @@ async function sendSubstitutionAssignedEmail(substituteEmail, substituteName, sl
   await sendEmail(substituteEmail, subjectLine, html);
 }
 
+/**
+ * Notify admin with a daily conflict summary
+ * @param {string} email
+ * @param {string} name
+ * @param {string} schoolName
+ * @param {object} conflictData - { overloadWarnings, uncoveredSlots }
+ */
+async function sendConflictSummaryEmail(email, name, schoolName, { overloadWarnings, uncoveredSlots }) {
+  const summary = `
+Hello ${name},
+
+Here is your daily conflict summary for ${schoolName}:
+
+🔴 Overloaded Teachers:
+${overloadWarnings.map(o => `- ${o.teacherName} (Day ${o.weekday}): ${o.lectureCount} periods`).join('\n') || 'None'}
+
+🟡 Uncovered Slots (No Substitute Assigned):
+${uncoveredSlots.map(s => `- Class ${s.classSection}, Period ${s.periodIndex + 1}, ${s.subject} (Day ${s.weekday})`).join('\n') || 'None'}
+
+Thank you,
+ClassSync
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: `Daily Conflict Summary – ${schoolName}`,
+    text: summary
+  });
+}
 
 module.exports = {
   sendLeaveStatusEmail,
   sendSubstitutionAssignedEmail,
+  sendConflictSummaryEmail,
 };
+
 // This module provides functions to send email notifications related to leave requests and substitutions.
 // It uses Nodemailer to send emails and includes functions for notifying teachers about leave status updates
 // and for notifying substitute teachers about their assignments.
