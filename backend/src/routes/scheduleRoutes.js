@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/authMiddleware');
 const permit = require('../middlewares/roleMiddleware');
-const { getScheduleGrid } = require('../controllers/scheduleController');
+const { getScheduleGrid, getClassSchedule } = require('../controllers/scheduleController');
 
 const {
   assignSlot,
@@ -20,6 +20,7 @@ router.post('/assign', permit('admin'), assignSlot);              // Create new 
 router.put('/:slotId', permit('admin'), editSlot);               // Edit slot
 router.delete('/:slotId', permit('admin'), deleteSlot);          // Delete slot
 router.get('/teacher/:teacherId', permit('admin'), getTeacherSchedule); // View schedule for a teacher
+router.get('/class/:section', permit('admin'), getClassSchedule);       // View weekly schedule for a class
 
 // Teacher-only route
 router.get('/mine', permit('teacher'), getMySchedule);           // View own schedule
@@ -29,6 +30,7 @@ router.get('/mine/grid', permit('teacher'), getScheduleGrid);
 
 // Admin viewing any teacher’s grid
 router.get('/teacher/:teacherId/grid', permit('admin'), getScheduleGrid);
+
 module.exports = router;
 
 //This code defines the schedule routes for the AutoSubstitute application.

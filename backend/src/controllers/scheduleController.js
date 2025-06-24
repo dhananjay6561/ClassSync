@@ -145,6 +145,39 @@ exports.getScheduleGrid = async (req, res) => {
   }
 };
 
+// Admin: Get weekly schedule for a specific class (grouped by weekday)
+exports.getClassSchedule = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const section = req.params.section;
+
+    const slots = await ScheduleSlot.find({ schoolId, classSection: section })
+      .populate('teacherId', 'name email')
+      .sort({ weekday: 1, periodIndex: 1 });
+
+    const grouped = {};
+
+    for (const slot of slots) {
+      const day = `Day-${slot.weekday}`;
+      if (!grouped[day]) grouped[day] = [];
+
+      grouped[day].push({
+        period: slot.periodIndex + 1,
+        subject: slot.subject,
+        teacher: slot.teacherId?.name || 'N/A',
+        email: slot.teacherId?.email || 'N/A'
+      });
+    }
+
+    res.json({ classSection: section, schedule: grouped });
+
+  } catch (err) {
+    console.error('getClassSchedule error:', err);
+    res.status(500).json({ message: 'Failed to fetch class schedule' });
+  }
+};
+
+
 
 //This module exports functions for managing schedule slots in a school.
 // It includes functions for assigning, editing, deleting slots, and retrieving schedules for teachers.
