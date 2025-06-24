@@ -5,6 +5,7 @@ import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
+import ScheduleEditor from './pages/admin/ScheduleEditor';
 import './App.css';
 
 function App() {
@@ -41,6 +42,16 @@ function App() {
           <ProtectedRoute allowedRoles={['admin']}>
              <DashboardLayout>
               <AdminDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } 
+      />
+       <Route 
+        path="/admin/teacher-schedule/:teacherId" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+             <DashboardLayout>
+              <ScheduleEditor />
             </DashboardLayout>
           </ProtectedRoute>
         } 

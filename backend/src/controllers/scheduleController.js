@@ -10,6 +10,17 @@ exports.assignSlot = async (req, res) => {
     const teacher = await User.findOne({ _id: teacherId, schoolId });
     if (!teacher) return res.status(404).json({ message: 'Teacher not found in your school.' });
 
+    // Check for slot conflict: same classSection, weekday, periodIndex, schoolId, but different teacher
+    const conflict = await ScheduleSlot.findOne({
+      schoolId,
+      classSection,
+      weekday,
+      periodIndex,
+    });
+    if (conflict) {
+      return res.status(400).json({ message: 'This slot is already assigned to another teacher.' });
+    }
+
     const slot = new ScheduleSlot({
       teacherId,
       schoolId,
@@ -34,14 +45,31 @@ exports.assignSlot = async (req, res) => {
 exports.editSlot = async (req, res) => {
   try {
     const { slotId } = req.params;
-    const { subject, classSection } = req.body;
+    const { subject, classSection, weekday, periodIndex } = req.body;
     const schoolId = req.schoolId;
 
     const slot = await ScheduleSlot.findOne({ _id: slotId, schoolId });
     if (!slot) return res.status(404).json({ message: 'Slot not found.' });
 
+    // If classSection, weekday, or periodIndex are being changed, check for conflict
+    const newClassSection = classSection !== undefined ? classSection : slot.classSection;
+    const newWeekday = weekday !== undefined ? weekday : slot.weekday;
+    const newPeriodIndex = periodIndex !== undefined ? periodIndex : slot.periodIndex;
+    const conflict = await ScheduleSlot.findOne({
+      schoolId,
+      classSection: newClassSection,
+      weekday: newWeekday,
+      periodIndex: newPeriodIndex,
+      _id: { $ne: slotId },
+    });
+    if (conflict) {
+      return res.status(400).json({ message: 'This slot is already assigned to another teacher.' });
+    }
+
     slot.subject = subject;
-    slot.classSection = classSection;
+    slot.classSection = newClassSection;
+    slot.weekday = newWeekday;
+    slot.periodIndex = newPeriodIndex;
     await slot.save();
 
     res.json({ message: 'Slot updated.', slot });
@@ -177,7 +205,45 @@ exports.getClassSchedule = async (req, res) => {
   }
 };
 
+// Get all unique subjects for the school
+exports.getSubjects = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const subjects = await ScheduleSlot.distinct('subject', { schoolId });
+    res.json({ subjects });
+  } catch (err) {
+    console.error('getSubjects error:', err);
+    res.status(500).json({ message: 'Failed to fetch subjects' });
+  }
+};
 
+// Get all unique classes for the school (extract class number from classSection)
+exports.getClasses = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const classSections = await ScheduleSlot.distinct('classSection', { schoolId });
+    // Extract class numbers (e.g., '10A' -> '10')
+    const classes = Array.from(new Set(classSections.map(cs => cs.match(/^(\d+)/)?.[1]).filter(Boolean)));
+    res.json({ classes });
+  } catch (err) {
+    console.error('getClasses error:', err);
+    res.status(500).json({ message: 'Failed to fetch classes' });
+  }
+};
+
+// Get all unique sections for the school (extract section letter from classSection)
+exports.getSections = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const classSections = await ScheduleSlot.distinct('classSection', { schoolId });
+    // Extract section letters (e.g., '10A' -> 'A')
+    const sections = Array.from(new Set(classSections.map(cs => cs.match(/^(\d+)([A-Z])$/i)?.[2]?.toUpperCase()).filter(Boolean)));
+    res.json({ sections });
+  } catch (err) {
+    console.error('getSections error:', err);
+    res.status(500).json({ message: 'Failed to fetch sections' });
+  }
+};
 
 //This module exports functions for managing schedule slots in a school.
 // It includes functions for assigning, editing, deleting slots, and retrieving schedules for teachers.

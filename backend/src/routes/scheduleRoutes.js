@@ -10,6 +10,9 @@ const {
   deleteSlot,
   getTeacherSchedule,
   getMySchedule,
+  getSubjects,
+  getClasses,
+  getSections,
 } = require('../controllers/scheduleController');
 
 // Authenticated routes only
@@ -28,8 +31,13 @@ router.get('/mine', permit('teacher'), getMySchedule);           // View own sch
 // Teacher's own grid
 router.get('/mine/grid', permit('teacher'), getScheduleGrid);
 
-// Admin viewing any teacher’s grid
+// Admin viewing any teacher's grid
 router.get('/teacher/:teacherId/grid', permit('admin'), getScheduleGrid);
+
+// Admin-only endpoints for dynamic options
+router.get('/subjects', permit('admin'), getSubjects);
+router.get('/classes', permit('admin'), getClasses);
+router.get('/sections', permit('admin'), getSections);
 
 module.exports = router;
 

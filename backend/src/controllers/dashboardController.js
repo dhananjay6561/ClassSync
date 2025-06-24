@@ -47,6 +47,28 @@ exports.getAdminDashboard = async (req, res) => {
   }
 };
 
+// Admin dashboard summary cards
+exports.getAdminStats = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+
+    const [totalTeachers, totalSchedules, pendingSubstitutions] = await Promise.all([
+      User.countDocuments({ schoolId, role: 'teacher' }),
+      ScheduleSlot.countDocuments({ schoolId }),
+      Substitution.countDocuments({ schoolId, status: 'pending' }), // Assuming 'pending' status exists
+    ]);
+
+    res.json({
+      totalTeachers,
+      totalSchedules,
+      pendingSubstitutions,
+    });
+  } catch (err) {
+    console.error('Admin Stats Error:', err);
+    res.status(500).json({ message: 'Failed to fetch admin stats.' });
+  }
+};
+
 //This module exports the getAdminDashboard function which retrieves various statistics for the admin dashboard, including counts of teachers, admins, leave requests, and substitutions, as well as the most loaded teachers based on their schedule slots. It uses Mongoose models to query the database and aggregate data as needed. The results are returned in a structured JSON response.
 // The function handles errors gracefully and logs them for debugging purposes.
 // It is designed to be used in an Express.js application, where it can be called as part of a route handler for the admin dashboard endpoint.
