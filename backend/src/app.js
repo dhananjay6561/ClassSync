@@ -9,9 +9,11 @@ connectDB();
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'http://localhost:5173', // Your frontend URL
+  origin: ['http://localhost:5173', 'https://class-sync-seven.vercel.app'],
+  credentials: true, // add this if you use cookies/JWT headers
   optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
