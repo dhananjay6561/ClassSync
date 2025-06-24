@@ -20,7 +20,10 @@ async function runConflictCheck() {
   console.log(`[CRON] Conflict Check Completed at ${new Date().toLocaleString()}`);
 }
 
+// This sets up the CRON schedule
 module.exports = () => {
-  // Run daily at 8:00 AM server time
-  cron.schedule('0 8 * * *', runConflictCheck);
+  cron.schedule('0 8 * * *', runConflictCheck); // Daily at 8 AM
 };
+
+//to test this function
+module.exports.runConflictCheck = runConflictCheck;
