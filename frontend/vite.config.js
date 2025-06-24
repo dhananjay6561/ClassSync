@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://classsync-2uzj.onrender.com',
         changeOrigin: true,
       },
     },
