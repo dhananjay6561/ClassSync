@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FiHome, FiUser, FiSettings, FiLogOut, FiHelpCircle, FiBell } from 'react-icons/fi';
+import { FiHome, FiUser, FiSettings, FiLogOut, FiHelpCircle, FiBell, FiUsers, FiCalendar } from 'react-icons/fi';
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -32,9 +32,9 @@ const DashboardLayout = ({ children }) => {
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 bg-white shadow-md flex flex-col">
         <div className="h-20 flex items-center justify-center border-b">
-          <Link to="/" className="text-2xl font-bold text-indigo-600">
+          <NavLink to="/" className="text-2xl font-bold text-indigo-600">
             ClassSync
-          </Link>
+          </NavLink>
         </div>
         <div className="flex-grow p-4">
           <div className="mb-8 text-center">
@@ -45,18 +45,57 @@ const DashboardLayout = ({ children }) => {
             <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
           </div>
           <nav className="space-y-2">
-            <Link to="/teacher/dashboard" className="flex items-center p-3 text-gray-700 bg-indigo-50 rounded-lg">
+            <NavLink 
+              to={user?.role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard'} 
+              className={({ isActive }) =>
+                `flex items-center p-3 text-gray-700 rounded-lg ` +
+                (isActive ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50')
+              }
+            >
               <FiHome className="mr-3" /> Dashboard
-            </Link>
-            <Link to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+            </NavLink>
+            {user?.role === 'admin' && (
+              <NavLink 
+                to="/admin/manage-teachers"
+                className={({ isActive }) =>
+                  `flex items-center p-3 text-gray-700 rounded-lg ` +
+                  (isActive ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50')
+                }
+              >
+                <FiUsers className="mr-3" /> Manage Teachers
+              </NavLink>
+            )}
+            {user?.role === 'admin' && (
+              <NavLink 
+                to="/admin/manage-leaves"
+                className={({ isActive }) =>
+                  `flex items-center p-3 text-gray-700 rounded-lg ` +
+                  (isActive ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50')
+                }
+              >
+                <FiCalendar className="mr-3" /> Manage Leaves
+              </NavLink>
+            )}
+            {user?.role === 'teacher' && (
+                <NavLink 
+                    to="/teacher/my-leave"
+                    className={({ isActive }) =>
+                    `flex items-center p-3 text-gray-700 rounded-lg ` +
+                    (isActive ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50')
+                    }
+                >
+                    <FiCalendar className="mr-3" /> My Leave
+                </NavLink>
+            )}
+            <NavLink to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
               <FiUser className="mr-3" /> Profile
-            </Link>
-            <Link to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+            </NavLink>
+            <NavLink to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
               <FiSettings className="mr-3" /> Settings
-            </Link>
-             <Link to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+            </NavLink>
+             <NavLink to="#" className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg">
               <FiHelpCircle className="mr-3" /> Help & Support
-            </Link>
+            </NavLink>
           </nav>
         </div>
         <div className="p-4 border-t">
@@ -87,12 +126,12 @@ const DashboardLayout = ({ children }) => {
                                 <p className="font-semibold">{user?.name}</p>
                                 <p className="text-sm text-gray-500">{user?.email}</p>
                             </div>
-                            <Link to="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <NavLink to="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <FiUser className="mr-2" /> Profile
-                            </Link>
-                            <Link to="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            </NavLink>
+                            <NavLink to="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <FiSettings className="mr-2" /> Settings
-                            </Link>
+                            </NavLink>
                             <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-500 hover:bg-gray-100">
                                 <FiLogOut className="mr-2" /> Logout
                             </button>

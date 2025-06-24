@@ -2,11 +2,11 @@ const LeaveRequest = require('../models/LeaveRequest');
 const ScheduleSlot = require('../models/ScheduleSlot');
 const Substitution = require('../models/Substitution');
 const { generateSubstitutionsForLeave } = require('../services/substitutionEngine');
-const { sendLeaveStatusEmail } = require('../services/notificationService');
+const { sendLeaveStatusEmail, sendSubstitutionAssignedEmail } = require('../services/notificationService');
 const User = require('../models/User');
 const { logAction } = require('../utils/auditLogger');
 
-// Teacher applies for leave
+// 🧑‍🏫 Teacher applies for leave
 exports.applyLeave = async (req, res) => {
   try {
     const teacherId = req.user.userId;
@@ -27,6 +27,7 @@ exports.applyLeave = async (req, res) => {
         { fromDate: { $lte: new Date(fromDate) }, toDate: { $gte: new Date(toDate) } }
       ]
     });
+
     if (overlappingLeave) {
       return res.status(400).json({ message: 'You already have a leave request overlapping this period.' });
     }
@@ -48,11 +49,26 @@ exports.applyLeave = async (req, res) => {
   }
 };
 
-// Admin views all leave requests for their school
+// 🧑‍🏫 Teacher views their own leave requests
+exports.getMyLeaves = async (req, res) => {
+  try {
+    const teacherId = req.user.userId;
+    const leaves = await LeaveRequest.find({ teacherId }).sort({ createdAt: -1 });
+    res.json(leaves);
+  } catch (err) {
+    console.error('getMyLeaves error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// 🧑‍💼 Admin views all leave requests for their school
 exports.getAllLeaves = async (req, res) => {
   try {
     const schoolId = req.schoolId;
-    const leaves = await LeaveRequest.find({ schoolId }).populate('teacherId', 'name email').sort({ createdAt: -1 });
+    const leaves = await LeaveRequest.find({ schoolId })
+      .populate('teacherId', 'name email')
+      .sort({ createdAt: -1 });
+
     res.json(leaves);
   } catch (err) {
     console.error('getAllLeaves error:', err);
@@ -60,7 +76,25 @@ exports.getAllLeaves = async (req, res) => {
   }
 };
 
-// Admin approves or rejects leave request
+// 🧑‍💼 Admin views only pending leave requests
+exports.getPendingLeaves = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const leaves = await LeaveRequest.find({
+      schoolId,
+      status: 'pending'
+    })
+      .populate('teacherId', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(leaves);
+  } catch (err) {
+    console.error('getPendingLeaves error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// 🧑‍💼 Admin approves or rejects a leave request
 exports.updateLeaveStatus = async (req, res) => {
   try {
     const { leaveId } = req.params;
@@ -74,6 +108,7 @@ exports.updateLeaveStatus = async (req, res) => {
     if (!leaveRequest) {
       return res.status(404).json({ message: 'Leave request not found.' });
     }
+
     if (leaveRequest.status !== 'pending') {
       return res.status(400).json({ message: 'Leave request already processed.' });
     }
@@ -136,7 +171,6 @@ exports.updateLeaveStatus = async (req, res) => {
       }
     }
 
-    // ✅ Log the leave status update action
     await logAction({
       req,
       action: `leave_${status}`,

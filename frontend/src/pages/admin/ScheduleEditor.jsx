@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import { FiX, FiArrowLeft } from 'react-icons/fi';
+import Toast from '../../components/ui/Toast';
 
 // Dynamic options will be fetched from backend
 
@@ -177,32 +178,6 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
   );
 };
 
-const Toast = ({ message, onClose }) => {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (message) {
-      setVisible(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setTimeout(onClose, 300); // Wait for fade-out
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [message, onClose]);
-
-  if (!message) return null;
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 bg-green-600 text-white px-6 py-3 rounded shadow-lg flex items-center space-x-4 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-      style={{ minWidth: 200 }}
-    >
-      <span>{message}</span>
-      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="ml-2 text-white hover:text-gray-200"><FiX /></button>
-    </div>
-  );
-};
-
 const ScheduleEditor = () => {
   const { teacherId } = useParams();
   const navigate = useNavigate();
@@ -216,6 +191,10 @@ const ScheduleEditor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [toast, setToast] = useState('');
+
+  // State for batch updates
+  const [pendingChanges, setPendingChanges] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const weekdayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayNameToIndex = weekdayMap.reduce((acc, day, index) => ({ ...acc, [day]: index }), {});
@@ -269,12 +248,29 @@ const ScheduleEditor = () => {
   }, [teacherId]);
 
   // --- Data Transformation for Grid View ---
-  const scheduleMatrix = schedule.reduce((acc, item) => {
-    const day = weekdayMap[item.weekday];
-    if (!acc[day]) acc[day] = {};
-    acc[day][item.periodIndex] = item;
-    return acc;
-  }, {});
+  const scheduleMatrix = React.useMemo(() => {
+    const baseSchedule = schedule.reduce((acc, item) => {
+      const day = weekdayMap[item.weekday];
+      if (!acc[day]) acc[day] = {};
+      acc[day][item.periodIndex] = { ...item, status: 'saved' };
+      return acc;
+    }, {});
+
+    // Apply pending changes for UI display
+    pendingChanges.forEach(change => {
+      const day = weekdayMap[change.weekday];
+      if (!baseSchedule[day]) baseSchedule[day] = {};
+
+      if (change.status === 'deleted') {
+        if (baseSchedule[day][change.periodIndex]) {
+           baseSchedule[day][change.periodIndex].status = 'deleted';
+        }
+      } else {
+        baseSchedule[day][change.periodIndex] = change;
+      }
+    });
+    return baseSchedule;
+  }, [schedule, pendingChanges, weekdayMap]);
   // --- End Transformation ---
 
   const handleCellClick = (day, periodIndex) => {
@@ -284,55 +280,81 @@ const ScheduleEditor = () => {
   };
 
   const handleSaveSlot = async (slotData) => {
-    const payload = {
-      teacherId,
+    const change = {
+      ...slotData,
       weekday: dayNameToIndex[slotData.day],
-      periodIndex: slotData.periodIndex,
-      subject: slotData.subject,
-      classSection: slotData.classSection,
+      status: slotData._id ? 'updated' : 'new'
     };
 
-    try {
-      if (slotData._id) { // Editing existing slot
-        const response = await api.put(`/api/schedules/${slotData._id}`, payload);
-        setSchedule(prev => prev.map(s => s._id === slotData._id ? response.data.slot : s));
-      } else { // Creating new slot
-        const response = await api.post('/api/schedules/assign', payload);
-        setSchedule(prev => [...prev, response.data.slot]);
-      }
-      setIsModalOpen(false);
-      setLastUpdated(new Date());
-      setToast('Schedule updated!');
-    } catch (err) {
-      const msg = err.response?.data?.message;
-      if (msg && msg.includes('already assigned to another teacher')) {
-        setToast('This slot is already assigned to another teacher.');
-      } else {
-        setToast('Failed to save slot.');
-      }
-      console.error('Failed to save slot:', err);
-    }
+    setPendingChanges(prev => {
+      const otherChanges = prev.filter(p => !(p.weekday === change.weekday && p.periodIndex === change.periodIndex));
+      return [...otherChanges, change];
+    });
+
+    setIsModalOpen(false);
+    setToast('Change staged. Click "Save Changes" to commit.');
   };
 
   const handleDeleteSlot = async (slotData) => {
+    const change = {
+      ...slotData,
+      weekday: dayNameToIndex[slotData.day],
+      status: 'deleted'
+    };
+
+    setPendingChanges(prev => {
+      // If deleting a slot that was just created locally, just remove it from pending.
+      if (slotData.status === 'new') {
+        return prev.filter(p => !(p.weekday === change.weekday && p.periodIndex === change.periodIndex));
+      }
+      const otherChanges = prev.filter(p => !(p.weekday === change.weekday && p.periodIndex === change.periodIndex));
+      return [...otherChanges, change];
+    });
+    
+    setIsModalOpen(false);
+    setToast('Deletion staged. Click "Save Changes" to commit.');
+  };
+
+  const handleBatchSave = async () => {
+    setIsSaving(true);
+    setToast('Saving all changes...');
+
+    const promises = pendingChanges.map(change => {
+      const payload = { teacherId, ...change };
+      switch (change.status) {
+        case 'new':
+          return api.post('/api/schedules/assign', payload);
+        case 'updated':
+          return api.put(`/api/schedules/${change._id}`, payload);
+        case 'deleted':
+          return api.delete(`/api/schedules/${change._id}`);
+        default:
+          return Promise.resolve();
+      }
+    });
+
     try {
-      await api.delete(`/api/schedules/${slotData._id}`);
-      setSchedule(prev => prev.filter(s => s._id !== slotData._id));
-      setIsModalOpen(false);
+      await Promise.all(promises);
+      setToast('All changes saved successfully!');
+      setPendingChanges([]);
+      // Refetch data to ensure consistency
+      const response = await api.get(`/api/admin/teachers/${teacherId}`);
+      setTeacher(response.data.teacher);
+      setSchedule(response.data.schedule);
       setLastUpdated(new Date());
-      setToast('Schedule updated!');
     } catch (err) {
-      console.error('Failed to delete slot:', err);
-      // You could show an error toast here
+      const msg = err.response?.data?.message || 'An error occurred during save.';
+      setToast(msg);
+      console.error('Batch save failed:', err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const [subject, setSubject] = useState('');
-const [classNum, setClassNum] = useState('');
-const [section, setSection] = useState('');
-const [addingSubject, setAddingSubject] = useState(false);
-const [addingClass, setAddingClass] = useState(false);
-const [addingSection, setAddingSection] = useState(false);
+  const handleDiscardChanges = () => {
+    setPendingChanges([]);
+    setToast('Changes discarded.');
+  };
 
   // When a new value is added, add it to the options for the current session
   useEffect(() => {
@@ -379,6 +401,24 @@ const [addingSection, setAddingSection] = useState(false);
           <FiArrowLeft className="mr-2" /> Back to Dashboard
         </button>
         <h1 className="text-3xl font-bold text-gray-800 flex-1">Schedule Editor</h1>
+        {pendingChanges.length > 0 && (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleBatchSave}
+              disabled={isSaving}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-300"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              onClick={handleDiscardChanges}
+              disabled={isSaving}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100"
+            >
+              Discard Changes
+            </button>
+          </div>
+        )}
       </div>
       <p className="text-lg text-gray-600 mb-2">Managing schedule for: <span className="font-semibold">{teacher?.name}</span></p>
       <p className="text-sm text-gray-500 mb-8">Last updated: {lastUpdated ? lastUpdated.toLocaleString() : 'N/A'}</p>
@@ -414,15 +454,24 @@ const [addingSection, setAddingSection] = useState(false);
                     <div
                       key={`${day}-${periodIndex}`}
                       onClick={() => handleCellClick(day, periodIndex)}
-                      className="relative p-3 border-t border-l border-gray-200 min-h-[100px] bg-white hover:bg-indigo-50 transition-colors cursor-pointer"
+                      className={`relative p-3 border-t border-l border-gray-200 min-h-[100px] transition-colors cursor-pointer ${
+                        slot?.status === 'deleted' ? 'bg-red-100 hover:bg-red-200' : 'bg-white hover:bg-indigo-50'
+                      }`}
                     >
-                      {slot ? (
+                      {slot && slot.status !== 'deleted' ? (
                         <div>
                           <p className="font-semibold text-sm text-indigo-800">{slot.subject}</p>
                           <p className="text-xs text-gray-600 mt-1">Class: {slot.classSection}</p>
+                          {slot.status === 'new' && <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full" title="New"></span>}
+                          {slot.status === 'updated' && <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full" title="Modified"></span>}
                         </div>
                       ) : (
                         <div className="text-gray-300 flex items-center justify-center h-full">+</div>
+                      )}
+                      {slot?.status === 'deleted' && (
+                        <div className="text-red-500 flex items-center justify-center h-full line-through">
+                          Deleted
+                        </div>
                       )}
                     </div>
                   );

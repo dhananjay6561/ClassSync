@@ -69,6 +69,61 @@ exports.getAdminStats = async (req, res) => {
   }
 };
 
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+
+    // Perform all database queries in parallel for efficiency
+    const [
+      totalTeachers,
+      totalSchedules,
+      schedulesForCharts,
+      leaveRequests
+    ] = await Promise.all([
+      User.countDocuments({ schoolId, role: 'teacher' }),
+      ScheduleSlot.countDocuments({ schoolId }),
+      ScheduleSlot.find({ schoolId }).select('subject weekday'),
+      LeaveRequest.find({ schoolId }).select('status')
+    ]);
+
+    // Calculate chart data from the results
+    const subjectsDistribution = schedulesForCharts.reduce((acc, slot) => {
+      acc[slot.subject] = (acc[slot.subject] || 0) + 1;
+      return acc;
+    }, {});
+
+    const weeklyLoad = schedulesForCharts.reduce((acc, slot) => {
+      const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slot.weekday];
+      if (!day) return acc; // Skip invalid weekdays
+      acc[day] = (acc[day] || 0) + 1;
+      return acc;
+    }, {});
+
+    const leaveStatusDistribution = leaveRequests.reduce((acc, request) => {
+      const status = request.status.charAt(0).toUpperCase() + request.status.slice(1);
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const pendingLeaves = leaveStatusDistribution.Pending || 0;
+
+    res.json({
+      totalTeachers,
+      totalSchedules,
+      pendingLeaves,
+      charts: {
+        subjectsDistribution,
+        weeklyLoad,
+        leaveStatusDistribution,
+      }
+    });
+
+  } catch (err) {
+    console.error('Error fetching dashboard stats:', err);
+    res.status(500).json({ message: 'Failed to fetch dashboard statistics.' });
+  }
+};
+
 //This module exports the getAdminDashboard function which retrieves various statistics for the admin dashboard, including counts of teachers, admins, leave requests, and substitutions, as well as the most loaded teachers based on their schedule slots. It uses Mongoose models to query the database and aggregate data as needed. The results are returned in a structured JSON response.
 // The function handles errors gracefully and logs them for debugging purposes.
 // It is designed to be used in an Express.js application, where it can be called as part of a route handler for the admin dashboard endpoint.
