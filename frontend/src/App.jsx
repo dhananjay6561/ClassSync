@@ -9,6 +9,8 @@ import ScheduleEditor from './pages/admin/ScheduleEditor';
 import ManageTeachersPage from './pages/admin/ManageTeachers';
 import ManageLeaves from './pages/admin/ManageLeaves';
 import MyLeave from './pages/teacher/MyLeave';
+import AdminSubstitutions from './pages/admin/Substitutions';
+import TeacherSubstitutions from './pages/teacher/Substitutions';
 import './App.css';
 
 function App() {
@@ -38,11 +40,31 @@ function App() {
         } 
       />
       <Route 
-        path="/teacher/my-leave" 
+        path="/teacher/my-schedule" 
+        element={
+          <ProtectedRoute allowedRoles={['teacher']}>
+            <DashboardLayout>
+              <TeacherDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/teacher/apply-leave" 
         element={
           <ProtectedRoute allowedRoles={['teacher']}>
             <DashboardLayout>
               <MyLeave />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/teacher/substitutions" 
+        element={
+          <ProtectedRoute allowedRoles={['teacher']}>
+            <DashboardLayout>
+              <TeacherSubstitutions />
             </DashboardLayout>
           </ProtectedRoute>
         } 
@@ -85,6 +107,16 @@ function App() {
           <ProtectedRoute allowedRoles={['admin']}>
              <DashboardLayout>
               <ManageLeaves />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/substitutions" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DashboardLayout>
+              <AdminSubstitutions />
             </DashboardLayout>
           </ProtectedRoute>
         } 
