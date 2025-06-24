@@ -43,6 +43,9 @@ app.use('/api/leaves', leaveRoutes);
 const dashboardRoutes = require('./routes/dashboardRoutes');
 app.use('/api/dashboard', dashboardRoutes);
 
+const conflictRoutes = require('./routes/conflictRoutes');
+app.use('/api/conflicts', conflictRoutes);
+
 
 
 module.exports = app;
