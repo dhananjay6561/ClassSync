@@ -5,9 +5,11 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       try {
@@ -18,6 +20,7 @@ export const AuthProvider = ({ children }) => {
             id: decoded.userId,
             role: decoded.role,
             email: decoded.email,
+            name: decoded.name,
           });
           setToken(storedToken);
         } else {
@@ -33,6 +36,7 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
       }
     }
+    setLoading(false);
   }, []);
 
   const login = (newToken) => {
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         id: decoded.userId,
         role: decoded.role,
         email: decoded.email,
+        name: decoded.name,
       });
       setToken(newToken);
       return decoded.role;
@@ -62,6 +67,7 @@ export const AuthProvider = ({ children }) => {
   const authContextValue = {
     user,
     token,
+    loading,
     login,
     logout,
   };

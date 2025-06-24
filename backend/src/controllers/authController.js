@@ -30,7 +30,7 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Create JWT token
-    const payload = { userId: user._id, role: user.role };
+    const payload = { userId: user._id, role: user.role, email: user.email, name: user.name };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     res.status(201).json({ token });
@@ -54,7 +54,7 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Create JWT token
-    const payload = { userId: user._id, role: user.role };
+    const payload = { userId: user._id, role: user.role, email: user.email, name: user.name };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     res.json({ token });
