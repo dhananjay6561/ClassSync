@@ -62,13 +62,16 @@ async function sendLeaveStatusEmail(teacherEmail, teacherName, status, fromDate,
 async function sendSubstitutionAssignedEmail(substituteEmail, substituteName, slotDetails) {
   const { weekday, periodIndex, subject, classSection, dateString } = slotDetails;
 
-  const subjectLine = `You’ve been assigned as substitute on ${weekday}, Period ${periodIndex + 1}`;
+  const weekdayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const readableWeekday = weekdayMap[weekday];
+
+  const subjectLine = `You’ve been assigned as substitute on ${readableWeekday}, Period ${periodIndex + 1}`;
   const html = `
     <p>Hi ${substituteName},</p>
     <p>You’ve been assigned to take a substitution class.</p>
     <ul>
       <li><strong>Date:</strong> ${dateString}</li>
-      <li><strong>Weekday:</strong> ${weekday}</li>
+      <li><strong>Weekday:</strong> ${readableWeekday}</li>
       <li><strong>Period:</strong> ${periodIndex + 1}</li>
       <li><strong>Class & Section:</strong> ${classSection}</li>
       <li><strong>Subject:</strong> ${subject}</li>

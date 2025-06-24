@@ -1,7 +1,7 @@
 const LeaveRequest = require('../models/LeaveRequest');
 const ScheduleSlot = require('../models/ScheduleSlot'); // We'll need this later for substitution
 const Substitution = require('../models/Substitution'); // To be created soon
-const { assignSubstitutesForLeave } = require('../services/substitutionEngine');
+const { generateSubstitutionsForLeave } = require('../services/substitutionEngine');
 const { sendLeaveStatusEmail } = require('../services/notificationService');
 const User = require('../models/User');
 
@@ -99,7 +99,7 @@ exports.updateLeaveStatus = async (req, res) => {
     // If approved, assign substitutes
     if (status === 'approved') {
       // existing call to substitution engine
-      const createdSubs = await assignSubstitutesForLeave(
+      const createdSubs = await generateSubstitutionsForLeave(
         leaveRequest.schoolId,
         leaveRequest.teacherId,
         leaveRequest.fromDate,
