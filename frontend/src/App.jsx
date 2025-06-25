@@ -1,6 +1,5 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,7 +17,7 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+  
       
       {/* Fallback for the root path, maybe a landing page or redirect */}
       <Route path="/" element={

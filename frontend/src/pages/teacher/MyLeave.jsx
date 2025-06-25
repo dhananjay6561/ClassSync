@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import Toast from '../../components/ui/Toast';
 import { FiCheckCircle, FiXCircle, FiClock, FiPlus } from 'react-icons/fi';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '../../styles/datepicker.css';
 
 const StatusBadge = ({ status }) => {
     const statusMap = {
@@ -40,8 +43,8 @@ const MyLeave = () => {
   
   // Form state
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,8 +73,8 @@ const MyLeave = () => {
       setMyRequests(prev => [response.data.leaveRequest, ...prev]);
       setToast({ message: 'Leave request submitted successfully!', type: 'success' });
       // Reset form
-      setFromDate('');
-      setToDate('');
+      setFromDate(null);
+      setToDate(null);
       setReason('');
       setIsFormVisible(false);
     } catch (err) {
@@ -105,11 +108,31 @@ const MyLeave = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="fromDate" className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-                <input type="date" id="fromDate" value={fromDate} onChange={e => setFromDate(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/>
+                <DatePicker
+                  selected={fromDate}
+                  onChange={(date) => setFromDate(date)}
+                  selectsStart
+                  startDate={fromDate}
+                  endDate={toDate}
+                  minDate={new Date()}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  placeholderText="Select start date"
+                />
               </div>
               <div>
                 <label htmlFor="toDate" className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-                <input type="date" id="toDate" value={toDate} onChange={e => setToDate(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/>
+                <DatePicker
+                  selected={toDate}
+                  onChange={(date) => setToDate(date)}
+                  selectsEnd
+                  startDate={fromDate}
+                  endDate={toDate}
+                  minDate={fromDate || new Date()}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  placeholderText="Select end date"
+                />
               </div>
               <div className="md:col-span-2">
                 <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">Reason</label>

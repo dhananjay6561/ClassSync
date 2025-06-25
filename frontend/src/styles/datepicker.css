@@ -1,0 +1,119 @@
+/* Ensure popup appears above everything */
+.react-datepicker-popper {
+  z-index: 1000 !important;
+  @apply transition-opacity duration-300 ease-out;
+}
+
+/* Base calendar container */
+.react-datepicker {
+  @apply border border-blue-100 shadow-lg shadow-blue-100/30
+         rounded-md bg-white/90 p-2
+         transition-all duration-300 ease-in-out transform scale-95 opacity-0 
+         min-w-[260px] max-w-full w-fit animate-datepicker-fade;
+  font-family: inherit;
+  backdrop-filter: blur(6px);
+}
+
+/* Fade-in + scale animation */
+@keyframes datepicker-fade {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-datepicker-fade {
+  animation: datepicker-fade 0.2s ease-out forwards;
+}
+
+/* Header */
+.react-datepicker__header {
+  @apply bg-blue-100/40 text-blue-900/70 rounded-t-md 
+         border-b border-blue-100 transition-colors duration-300;
+  padding-top: 0.75rem;
+}
+
+/* Month label */
+.react-datepicker__current-month {
+  @apply text-base font-medium text-blue-800 pb-1;
+}
+
+/* Navigation arrows */
+.react-datepicker__navigation--previous,
+.react-datepicker__navigation--next {
+  @apply top-3;
+}
+.react-datepicker__navigation-icon::before {
+  @apply border-blue-400 transition-all duration-200;
+  border-width: 2px 2px 0 0;
+  height: 8px;
+  width: 8px;
+}
+
+/* Month container */
+.react-datepicker__month-container {
+  @apply p-3;
+}
+
+/* Day grid */
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+  @apply w-9 h-9 leading-9 text-center rounded-md text-sm 
+         transition-all duration-200 ease-in-out;
+}
+
+/* Day appearance */
+.react-datepicker__day {
+  @apply text-blue-700/70 hover:bg-blue-100 hover:text-blue-800;
+}
+
+/* Highlighted selections */
+.react-datepicker__day--selected,
+.react-datepicker__day--range-start,
+.react-datepicker__day--range-end,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  @apply bg-blue-500/70 text-white hover:bg-blue-600 shadow-md;
+}
+
+/* Optional: rounded edges for range start/end */
+.react-datepicker__day--range-start {
+  @apply rounded-l-full;
+}
+.react-datepicker__day--range-end {
+  @apply rounded-r-full;
+}
+
+/* Keyboard selected */
+.react-datepicker__day--keyboard-selected {
+  @apply bg-blue-400/50 text-white;
+}
+
+/* Disabled days */
+.react-datepicker__day--disabled {
+  @apply text-gray-300 cursor-not-allowed hover:bg-transparent;
+}
+
+/* Day name row */
+.react-datepicker__day-names {
+  @apply mb-1;
+}
+.react-datepicker__day-name {
+  @apply text-blue-500/40 font-medium text-xs;
+}
+
+/* Fix for input field (To Date box) */
+input.react-datepicker-ignore-onclickoutside {
+  @apply text-blue-800 bg-white/90 border border-blue-300 rounded-md px-3 py-2 shadow-sm 
+         focus:outline-none focus:ring-2 focus:ring-blue-300 
+         w-full transition-all duration-200;
+}
+
+/* Optional: when datepicker is visible */
+.react-datepicker--visible {
+  @apply opacity-100 pointer-events-auto transition-opacity duration-300 ease-out;
+}
