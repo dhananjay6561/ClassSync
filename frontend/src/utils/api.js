@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://classsync-2uzj.onrender.com', // Your backend server URL
+  baseURL: import.meta.env.VITE_API_URL || 'https://classsync-2uzj.onrender.com',
 });
 
 api.interceptors.request.use(
