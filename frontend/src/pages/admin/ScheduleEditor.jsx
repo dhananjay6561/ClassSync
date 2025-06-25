@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
-import { FiX, FiArrowLeft } from 'react-icons/fi';
+import { FiX, FiArrowLeft, FiChevronDown } from 'react-icons/fi';
 import Toast from '../../components/ui/Toast';
 
 // Dynamic options will be fetched from backend
@@ -56,28 +56,31 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-            <select
-              id="subject"
-              value={addingSubject ? '__add_new_subject__' : subjectOptions.includes(subject) ? subject : ''}
-              onChange={e => {
-                if (e.target.value === '__add_new_subject__') {
-                  setAddingSubject(true);
-                  setSubject('');
-                } else {
-                  setAddingSubject(false);
-                  setSubject(e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              disabled={optionsLoading}
-              required={!addingSubject}
-            >
-              <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select subject'}</option>
-              {subjectOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-              <option value="__add_new_subject__">Add new subject...</option>
-            </select>
+            <div className="relative">
+              <select
+                id="subject"
+                value={addingSubject ? '__add_new_subject__' : subjectOptions.includes(subject) ? subject : ''}
+                onChange={e => {
+                  if (e.target.value === '__add_new_subject__') {
+                    setAddingSubject(true);
+                    setSubject('');
+                  } else {
+                    setAddingSubject(false);
+                    setSubject(e.target.value);
+                  }
+                }}
+                className="w-full appearance-none bg-white px-3 py-2 pr-8 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+                disabled={optionsLoading}
+                required={!addingSubject}
+              >
+                <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select subject'}</option>
+                {subjectOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+                <option value="__add_new_subject__">Add new subject...</option>
+              </select>
+              <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
             {addingSubject && (
               <input
                 type="text"
@@ -92,27 +95,30 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-            <select
-              value={addingClass ? '__add_new_class__' : classOptions.includes(classNum) ? classNum : ''}
-              onChange={e => {
-                if (e.target.value === '__add_new_class__') {
-                  setAddingClass(true);
-                  setClassNum('');
-                } else {
-                  setAddingClass(false);
-                  setClassNum(e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              disabled={optionsLoading}
-              required={!addingClass}
-            >
-              <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select class'}</option>
-              {classOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-              <option value="__add_new_class__">Add new class...</option>
-            </select>
+            <div className="relative">
+              <select
+                value={addingClass ? '__add_new_class__' : classOptions.includes(classNum) ? classNum : ''}
+                onChange={e => {
+                  if (e.target.value === '__add_new_class__') {
+                    setAddingClass(true);
+                    setClassNum('');
+                  } else {
+                    setAddingClass(false);
+                    setClassNum(e.target.value);
+                  }
+                }}
+                className="w-full appearance-none bg-white px-3 py-2 pr-8 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+                disabled={optionsLoading}
+                required={!addingClass}
+              >
+                <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select class'}</option>
+                {classOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+                <option value="__add_new_class__">Add new class...</option>
+              </select>
+              <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
             {addingClass && (
               <input
                 type="text"
@@ -127,27 +133,30 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-            <select
-              value={addingSection ? '__add_new_section__' : sectionOptions.includes(section) ? section : ''}
-              onChange={e => {
-                if (e.target.value === '__add_new_section__') {
-                  setAddingSection(true);
-                  setSection('');
-                } else {
-                  setAddingSection(false);
-                  setSection(e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              disabled={optionsLoading}
-              required={!addingSection}
-            >
-              <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select section'}</option>
-              {sectionOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-              <option value="__add_new_section__">Add new section...</option>
-            </select>
+            <div className="relative">
+              <select
+                value={addingSection ? '__add_new_section__' : sectionOptions.includes(section) ? section : ''}
+                onChange={e => {
+                  if (e.target.value === '__add_new_section__') {
+                    setAddingSection(true);
+                    setSection('');
+                  } else {
+                    setAddingSection(false);
+                    setSection(e.target.value);
+                  }
+                }}
+                className="w-full appearance-none bg-white px-3 py-2 pr-8 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+                disabled={optionsLoading}
+                required={!addingSection}
+              >
+                <option value="" disabled>{optionsLoading ? 'Loading...' : 'Select section'}</option>
+                {sectionOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+                <option value="__add_new_section__">Add new section...</option>
+              </select>
+              <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
             {addingSection && (
               <input
                 type="text"
@@ -233,9 +242,14 @@ const ScheduleEditor = () => {
           api.get('/api/schedules/classes'),
           api.get('/api/schedules/sections'),
         ]);
-        setSubjectOptions(subjectsRes.data.subjects || []);
-        setClassOptions(classesRes.data.classes || []);
-        setSectionOptions(sectionsRes.data.sections || []);
+        // Sort the options before setting state
+        const sortedSubjects = (subjectsRes.data.subjects || []).sort();
+        const sortedClasses = (classesRes.data.classes || []).sort((a, b) => a - b);
+        const sortedSections = (sectionsRes.data.sections || []).sort();
+
+        setSubjectOptions(sortedSubjects);
+        setClassOptions(sortedClasses);
+        setSectionOptions(sortedSections);
       } catch (err) {
         setSubjectOptions([]);
         setClassOptions([]);
@@ -357,17 +371,17 @@ const ScheduleEditor = () => {
   };
 
   // When a new value is added, add it to the options for the current session
-  useEffect(() => {
-    if (subject && addingSubject && !subjectOptions.includes(subject)) {
-      subjectOptions.push(subject);
-    }
-    if (classNum && addingClass && !classOptions.includes(classNum)) {
-      classOptions.push(classNum);
-    }
-    if (section && addingSection && !sectionOptions.includes(section)) {
-      sectionOptions.push(section);
-    }
-  }, [subject, classNum, section]);
+  // useEffect(() => {
+  //   if (subject && addingSubject && !subjectOptions.includes(subject)) {
+  //     subjectOptions.push(subject);
+  //   }
+  //   if (classNum && addingClass && !classOptions.includes(classNum)) {
+  //     classOptions.push(classNum);
+  //   }
+  //   if (section && addingSection && !sectionOptions.includes(section)) {
+  //     sectionOptions.push(section);
+  //   }
+  // }, [subject, classNum, section]);
   
 
   if (loading) {
