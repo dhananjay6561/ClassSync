@@ -1,7 +1,7 @@
 const Substitution = require('../models/Substitution');
 const ScheduleSlot = require('../models/ScheduleSlot');
 const User = require('../models/User');
-const { generateSubstitutionsForLeave } = require('../services/substitutionService');
+const { generateSubstitutionsForLeave } = require('../services/substitutionEngine');
 
 // Teacher: Get their substitutions
 exports.getMySubstitutions = async (req, res) => {
