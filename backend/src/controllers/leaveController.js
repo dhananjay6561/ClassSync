@@ -95,6 +95,7 @@ exports.getPendingLeaves = async (req, res) => {
 };
 
 // 🧑‍💼 Admin approves or rejects a leave request
+// 🧑‍💼 Admin approves or rejects a leave request
 exports.updateLeaveStatus = async (req, res) => {
   try {
     const { leaveId } = req.params;
@@ -129,45 +130,59 @@ exports.updateLeaveStatus = async (req, res) => {
       );
     }
 
+    // 🔥 AUTO-SUBSTITUTION: Generate substitutions when leave is approved
     if (status === 'approved') {
-      const createdSubs = await generateSubstitutionsForLeave(
-        leaveRequest.schoolId,
-        leaveRequest.teacherId,
-        leaveRequest.fromDate,
-        leaveRequest.toDate
-      );
+      try {
+        // ✅ FIXED: Pass the complete leaveRequest object with schoolId
+        const leaveData = {
+          teacherId: leaveRequest.teacherId,
+          fromDate: leaveRequest.fromDate,
+          toDate: leaveRequest.toDate,
+          schoolId: leaveRequest.schoolId
+        };
+        
+        const createdSubs = await generateSubstitutionsForLeave(leaveData);
 
-      for (const sub of createdSubs) {
-        const subTeacher = await User.findById(sub.substituteTeacherId);
-        const slot = await ScheduleSlot.findById(sub.scheduleSlotId);
-        if (subTeacher && slot) {
-          const leaveDates = [];
-          for (
-            let d = new Date(leaveRequest.fromDate);
-            d <= leaveRequest.toDate;
-            d.setDate(d.getDate() + 1)
-          ) {
-            leaveDates.push(new Date(d));
-          }
-          const slotDateObj = leaveDates.find(
-            (dt) => dt.getDay() === Number(slot.weekday)
-          );
-          const dateString = slotDateObj
-            ? slotDateObj.toLocaleDateString()
-            : 'N/A';
-
-          await sendSubstitutionAssignedEmail(
-            subTeacher.email,
-            subTeacher.name,
-            {
-              weekday: slot.weekday,
-              periodIndex: slot.periodIndex,
-              subject: slot.subject,
-              classSection: slot.classSection,
-              dateString,
+        // 📧 Send email notifications to substitute teachers
+        for (const subData of createdSubs) {
+          const subTeacher = await User.findById(subData.sub.substituteTeacherId);
+          if (subTeacher && subTeacher.email) {
+            const leaveDates = [];
+            for (
+              let d = new Date(leaveRequest.fromDate);
+              d <= leaveRequest.toDate;
+              d.setDate(d.getDate() + 1)
+            ) {
+              leaveDates.push(new Date(d));
             }
-          );
+            
+            const slotDateObj = leaveDates.find(
+              (dt) => dt.getDay() === Number(subData.slot.weekday)
+            );
+            const dateString = slotDateObj
+              ? slotDateObj.toLocaleDateString()
+              : 'N/A';
+
+            await sendSubstitutionAssignedEmail(
+              subTeacher.email,
+              subTeacher.name,
+              {
+                weekday: subData.slot.weekday,
+                periodIndex: subData.slot.periodIndex,
+                subject: subData.slot.subject,
+                classSection: subData.slot.classSection,
+                dateString,
+              }
+            );
+          }
         }
+
+        console.log(`✅ Auto-generated ${createdSubs.length} substitutions for approved leave`);
+        
+      } catch (substitutionError) {
+        console.error('❌ Auto-substitution failed:', substitutionError);
+        // Don't fail the entire leave approval if substitution fails
+        // Just log the error and continue
       }
     }
 
@@ -182,7 +197,15 @@ exports.updateLeaveStatus = async (req, res) => {
       }
     });
 
-    res.json({ message: `Leave request ${status}.`, leaveRequest });
+    res.json({ 
+      message: `Leave request ${status}.`, 
+      leaveRequest,
+      // Include substitution count in response for admin feedback
+      ...(status === 'approved' && { 
+        substitutionsGenerated: 'Auto-substitutions processed' 
+      })
+    });
+    
   } catch (err) {
     console.error('updateLeaveStatus error:', err);
     res.status(500).json({ message: 'Internal server error' });

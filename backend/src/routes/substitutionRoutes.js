@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   getMySubstitutions,
   getAllSubstitutions,
-  getSubstitutionHistory
+  getSubstitutionHistory,
+  generateSubstitutions 
 } = require('../controllers/substitutionController');
 const auth = require('../middlewares/authMiddleware');
 const permit = require('../middlewares/roleMiddleware');
@@ -16,6 +17,8 @@ router.get('/all', auth, permit('admin'), getAllSubstitutions);
 
 // Admin views full substitution history with optional filters
 router.get('/history', auth, permit('admin'), getSubstitutionHistory);
+
+router.post('/generate', auth, permit('admin'), generateSubstitutions);
 
 module.exports = router;
 

@@ -1,6 +1,7 @@
 const Substitution = require('../models/Substitution');
 const ScheduleSlot = require('../models/ScheduleSlot');
 const User = require('../models/User');
+const { generateSubstitutionsForLeave } = require('../services/substitutionService');
 
 // Teacher: Get their substitutions
 exports.getMySubstitutions = async (req, res) => {
@@ -87,6 +88,67 @@ exports.getSubstitutionHistory = async (req, res) => {
   } catch (err) {
     console.error('Substitution History Error:', err);
     res.status(500).json({ message: 'Failed to fetch substitution history' });
+  }
+};
+
+// Admin: Generate substitutions for a leave request
+exports.generateSubstitutions = async (req, res) => {
+  try {
+    const { leaveRequestId, teacherId, fromDate, toDate, schoolId } = req.body;
+
+    // Validate required fields
+    if (!teacherId || !fromDate || !toDate || !schoolId) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: teacherId, fromDate, toDate, schoolId' 
+      });
+    }
+
+    // Create a mock leave request object for the service
+    const leaveRequest = {
+      _id: leaveRequestId,
+      teacherId,
+      fromDate,
+      toDate,
+      schoolId
+    };
+
+    // Generate substitutions using your existing service
+    const substitutions = await generateSubstitutionsForLeave(leaveRequest);
+
+    // Check for conflicts (classes that couldn't be covered)
+    const totalSlotsNeeded = await ScheduleSlot.countDocuments({ 
+      teacherId, 
+      schoolId 
+    });
+    
+    const conflicts = [];
+    if (substitutions.length < totalSlotsNeeded) {
+      // You might want to implement logic to identify specific conflicts
+      conflicts.push({
+        message: `${totalSlotsNeeded - substitutions.length} classes need manual assignment`
+      });
+    }
+
+    res.json({
+      success: true,
+      substitutions: substitutions.map(sub => ({
+        id: sub.sub._id,
+        originalTeacher: sub.substitute.name,
+        subject: sub.slot.subject,
+        classSection: sub.slot.classSection,
+        date: sub.date,
+        period: sub.slot.periodIndex + 1
+      })),
+      conflicts,
+      message: `Successfully arranged coverage for ${substitutions.length} classes`
+    });
+
+  } catch (error) {
+    console.error('Generate substitutions error:', error);
+    res.status(500).json({ 
+      message: 'Failed to generate substitutions',
+      error: error.message 
+    });
   }
 };
 
