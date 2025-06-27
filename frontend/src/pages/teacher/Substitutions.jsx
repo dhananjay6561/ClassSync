@@ -145,7 +145,7 @@ const Substitutions = () => {
                       <tr key={substitution._id} className="border-b hover:bg-gray-50 transition-colors">
                         <td className="p-4">
                           <div className="font-medium">
-                            {new Date(substitution.createdAt).toLocaleDateString()}
+                            {new Date(substitution.date).toLocaleDateString()}
                           </div>
                           <div className="text-sm text-gray-500">
                             {weekdayMap[substitution.scheduleSlotId?.weekday]}
@@ -199,7 +199,7 @@ const Substitutions = () => {
                       Substituted for <span className="text-indigo-600">{substitution.originalTeacherId?.name}</span>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {substitution.scheduleSlotId?.subject} - Class {substitution.scheduleSlotId?.classSection} • {new Date(substitution.createdAt).toLocaleDateString()}
+                      {substitution.scheduleSlotId?.subject} - Class {substitution.scheduleSlotId?.classSection} • {new Date(substitution.date).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-xs text-gray-400">
