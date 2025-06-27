@@ -35,15 +35,15 @@ const AdminDashboard = () => {
     const fetchAdminStats = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/api/dashboard/stats'); 
+        const response = await api.get('/api/dashboard/stats');
         setStats(response.data);
         setError('');
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch admin statistics.');
-        setStats({ 
-          totalTeachers: 12, 
-          totalSchedules: 150, 
-          pendingLeaves: 3, 
+        setStats({
+          totalTeachers: 12,
+          totalSchedules: 150,
+          pendingLeaves: 3,
           charts: {
             subjectsDistribution: { Math: 10, Science: 8, English: 12, History: 5 },
             weeklyLoad: { Mon: 30, Tue: 25, Wed: 35, Thu: 28, Fri: 32 },
@@ -78,11 +78,12 @@ const AdminDashboard = () => {
   const leaveStatusData = Object.entries(stats.charts.leaveStatusDistribution || {}).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Admin Dashboard</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 md:mb-8">Admin Dashboard</h1>
 
       {/* Top summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        {/* Card 1 */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
@@ -93,6 +94,8 @@ const AdminDashboard = () => {
             <p className="text-xs text-muted-foreground">Active teachers in the school</p>
           </CardContent>
         </Card>
+
+        {/* Card 2 */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Scheduled Periods</CardTitle>
@@ -103,6 +106,8 @@ const AdminDashboard = () => {
             <p className="text-xs text-muted-foreground">Periods scheduled this week</p>
           </CardContent>
         </Card>
+
+        {/* Card 3 */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Leaves</CardTitle>
@@ -110,7 +115,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingLeaves || 0}</div>
-             <Link to="/admin/manage-leaves" className="text-xs text-muted-foreground hover:underline">
+            <Link to="/admin/manage-leaves" className="text-xs text-muted-foreground hover:underline">
               Review leave requests
             </Link>
           </CardContent>
@@ -118,16 +123,15 @@ const AdminDashboard = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mt-10 grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Weekly Load */}
+        <Card className="md:col-span-2 lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Weekly Load</CardTitle>
             <TooltipIcon text={
               <>
                 <p className="font-bold mb-1">Weekly Load Distribution</p>
                 <p>This graph shows the total number of periods scheduled for each day.</p>
-                <p className="mt-2"><b>X-axis:</b> Day of the week</p>
-                <p><b>Y-axis:</b> Number of scheduled periods</p>
               </>
             } />
           </CardHeader>
@@ -143,6 +147,8 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Subject Distribution */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Subject Distribution</CardTitle>
@@ -150,8 +156,6 @@ const AdminDashboard = () => {
               <>
                 <p className="font-bold mb-1">Subject Period Distribution</p>
                 <p>This graph shows the total number of periods assigned to each subject.</p>
-                <p className="mt-2"><b>X-axis:</b> Subject name</p>
-                <p><b>Y-axis:</b> Number of scheduled periods</p>
               </>
             } />
           </CardHeader>
@@ -159,7 +163,7 @@ const AdminDashboard = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={Object.entries(stats.charts.subjectsDistribution || {}).map(([name, value]) => ({ name, value }))}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} height={70} />
+                <XAxis dataKey="name" angle={-30} textAnchor="end" interval={0} height={60} />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="value" fill="#8884d8" />
@@ -167,7 +171,9 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-         <Card>
+
+        {/* Leave Status Pie */}
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Leave Status</CardTitle>
             <TooltipIcon text={
@@ -212,4 +218,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
