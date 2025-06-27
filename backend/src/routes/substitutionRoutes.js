@@ -8,6 +8,8 @@ const {
 } = require('../controllers/substitutionController');
 const auth = require('../middlewares/authMiddleware');
 const permit = require('../middlewares/roleMiddleware');
+const { overrideSubstitution } = require('../controllers/substitutionController');
+
 
 // Teacher views their own substitutions
 router.get('/mine', auth, permit('teacher'), getMySubstitutions);
@@ -19,6 +21,10 @@ router.get('/all', auth, permit('admin'), getAllSubstitutions);
 router.get('/history', auth, permit('admin'), getSubstitutionHistory);
 
 router.post('/generate', auth, permit('admin'), generateSubstitutions);
+
+// Admin overrides a substitution (reassign cover teacher)
+router.post('/override', auth, permit('admin'), overrideSubstitution);
+
 
 module.exports = router;
 

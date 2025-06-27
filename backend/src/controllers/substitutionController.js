@@ -159,6 +159,33 @@ exports.generateSubstitutions = async (req, res) => {
   }
 };
 
+// Admin: Override a substitution (change the cover teacher)
+exports.overrideSubstitution = async (req, res) => {
+  try {
+    const { substitutionId, newSubstituteId, reason } = req.body;
+    const schoolId = req.schoolId;
+
+    if (!substitutionId || !newSubstituteId) {
+      return res.status(400).json({ message: 'Missing substitutionId or newSubstituteId' });
+    }
+
+    const substitution = await Substitution.findOne({ _id: substitutionId, schoolId });
+    if (!substitution) {
+      return res.status(404).json({ message: 'Substitution not found' });
+    }
+
+    substitution.substituteTeacherId = newSubstituteId;
+    substitution.reason = reason || substitution.reason;
+    await substitution.save();
+
+    res.json({ message: 'Substitution updated successfully.' });
+  } catch (err) {
+    console.error('Override substitution error:', err);
+    res.status(500).json({ message: 'Failed to override substitution' });
+  }
+};
+
+
 
 //This code defines two functions for managing teacher substitutions in a school system.
 // The `getMySubstitutions` function retrieves all substitutions for the currently logged-in teacher.
