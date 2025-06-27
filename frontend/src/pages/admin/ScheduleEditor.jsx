@@ -409,12 +409,12 @@ const ScheduleEditor = () => {
 
       <div className="flex items-center mb-4">
         <button
-          onClick={() => navigate('/admin/dashboard')}
+          onClick={() => navigate('/admin/manage-teachers')}
           className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 mr-4"
         >
-          <FiArrowLeft className="mr-2" /> Back to Dashboard
+          <FiArrowLeft className="mr-2" /> Back
         </button>
-        <h1 className="text-3xl font-bold text-gray-800 flex-1">Schedule Editor</h1>
+        <h1 className="text-3xl font-bold text-gray-800 flex-1">Back</h1>
         {pendingChanges.length > 0 && (
           <div className="flex items-center gap-4">
             <button

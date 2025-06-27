@@ -10,37 +10,32 @@ connectDB();
 // CORS Configuration
 const corsOptions = {
   origin: ['http://localhost:5173', 'https://class-sync-seven.vercel.app'],
-  credentials: true, // add this if you use cookies/JWT headers
-  optionsSuccessStatus: 200
+  credentials: true,
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
-
 app.use(express.json());
+
+// Middlewares
+const auth = require('./middlewares/authMiddleware');
+const schoolContext = require('./middlewares/schoolContext');
 
 app.get('/', (req, res) => {
   res.send('AutoSubstitute API running');
 });
 
-// Public Routes
+// 🟢 Public Routes (NO auth)
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
 const schoolRoutes = require('./routes/schoolRoutes');
 app.use('/api/schools', schoolRoutes);
 
-
-
-
-// Auth middleware
-const auth = require('./middlewares/authMiddleware');
-app.use(auth);
-
-// School Context Middleware
-const schoolContext = require('./middlewares/schoolContext');
+// 🔒 Protected Routes (WITH auth & context)
+app.use(auth); // ← Only from this point on
 app.use(schoolContext);
 
-// Protected Routes
 const scheduleRoutes = require('./routes/scheduleRoutes');
 app.use('/api/schedules', scheduleRoutes);
 

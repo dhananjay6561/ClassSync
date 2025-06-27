@@ -41,6 +41,7 @@ exports.generateSubstitutionsForLeave = async (leaveRequest) => {
           substituteTeacherId: substitute._id,
           scheduleSlotId: slot._id,
           reason: 'Leave',
+          schoolId: schoolId
         });
 
         substitutions.push({ sub, substitute, slot, date: new Date(date) });

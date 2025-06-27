@@ -103,6 +103,8 @@ exports.generateSubstitutions = async (req, res) => {
       });
     }
 
+    console.log('Generating substitutions for leave request:')
+
     // Create a mock leave request object for the service
     const leaveRequest = {
       _id: leaveRequestId,
@@ -111,6 +113,8 @@ exports.generateSubstitutions = async (req, res) => {
       toDate,
       schoolId
     };
+
+    console.log('Leave Request:');
 
     // Generate substitutions using your existing service
     const substitutions = await generateSubstitutionsForLeave(leaveRequest);
@@ -129,6 +133,8 @@ exports.generateSubstitutions = async (req, res) => {
       });
     }
 
+    console.log('Substitutions generated:', substitutions.length);
+
     res.json({
       success: true,
       substitutions: substitutions.map(sub => ({
@@ -145,6 +151,7 @@ exports.generateSubstitutions = async (req, res) => {
 
   } catch (error) {
     console.error('Generate substitutions error:', error);
+    
     res.status(500).json({ 
       message: 'Failed to generate substitutions',
       error: error.message 

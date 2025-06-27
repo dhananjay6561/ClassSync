@@ -1,41 +1,37 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://classsync-2uzj.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
+// Request Interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+
+    // ⛔ Do NOT attach token for public endpoints like login or register
+    const isPublicEndpoint = config.url.includes('/auth/login') || config.url.includes('/auth/register');
+
+    if (token && !isPublicEndpoint) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Optional: Add a response interceptor to handle token expiration
+// Response Interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // If the error is 401 and not on the login page, it could be an expired token
     if (error.response && error.response.status === 401) {
-      // Here you could trigger a logout or token refresh
-      // For now, we'll just log the error
-      console.error("Authentication Error:", error.response.data);
-      // To prevent loops, you might want to redirect to login
+      console.error('Authentication Error:', error.response.data);
+      // Optional: redirect or logout
       // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
-
-export default api; 
-
-//This is the api for the backend
+export default api;
