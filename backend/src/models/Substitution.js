@@ -28,7 +28,11 @@ const substitutionSchema = new mongoose.Schema({
   assignedAt: {
     type: Date,
     default: Date.now,
-  }
+  },
+  date: {
+    type: Date,
+    required: true,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Substitution', substitutionSchema);

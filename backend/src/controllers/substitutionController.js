@@ -68,7 +68,7 @@ exports.getSubstitutionHistory = async (req, res) => {
     );
 
     const result = filtered.map(sub => ({
-      date: sub.createdAt.toISOString().split('T')[0],
+      date: sub.date ? sub.date.toISOString().split('T')[0] : 'N/A', // Format date as YYYY-MM-DD
       period: sub.scheduleSlotId?.periodIndex + 1,
       weekday: sub.scheduleSlotId?.weekday,
       subject: sub.scheduleSlotId?.subject,

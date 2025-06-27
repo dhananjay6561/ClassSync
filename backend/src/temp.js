@@ -11,7 +11,7 @@ async function deleteOldSlots() {
     await mongoose.connect(MONGO_URI);
     console.log("Connected to MongoDB ✅");
 
-    const cutoffDate = new Date("2025-06-26T23:59:59.999Z");
+    const cutoffDate = new Date("2025-06-27T23:59:59.999Z");
 
     const result = await ScheduleSlot.deleteMany({
       createdAt: { $lte: cutoffDate }
