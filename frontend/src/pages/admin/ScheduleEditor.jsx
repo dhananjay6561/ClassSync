@@ -4,7 +4,7 @@ import api from '../../utils/api';
 import { FiX, FiArrowLeft, FiChevronDown } from 'react-icons/fi';
 import Toast from '../../components/ui/Toast';
 
-// Dynamic options will be fetched from backend
+
 
 const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjectOptions, classOptions, sectionOptions, optionsLoading }) => {
   const [subject, setSubject] = useState('');
@@ -18,7 +18,7 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
   useEffect(() => {
     if (slotInfo) {
       setSubject(slotInfo.subject || '');
-      // Split classSection if possible
+      
       if (slotInfo.classSection) {
         const match = slotInfo.classSection.match(/^(\d+)([A-Z])$/i);
         if (match) {
@@ -47,8 +47,8 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-xl max-w-sm w-full max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold mb-4">{isEditing ? 'Edit' : 'Create'} Schedule Slot</h3>
         <p className="text-sm text-gray-500 mb-4">
           For {slotInfo.day} - Period {slotInfo.periodIndex}
@@ -169,16 +169,16 @@ const ScheduleSlotModal = ({ isOpen, onClose, onSave, onDelete, slotInfo, subjec
               />
             )}
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               {isEditing && (
                 <button type="button" onClick={() => onDelete(slotInfo)}
-                  className="px-4 py-2 text-red-600 rounded-md hover:bg-red-50">Delete</button>
+                  className="w-full sm:w-auto px-4 py-2 text-red-600 rounded-md hover:bg-red-50 border border-red-200">Delete</button>
               )}
             </div>
-            <div className="flex space-x-4">
-              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save</button>
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-4">
+              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 order-2 sm:order-1">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 order-1 sm:order-2">Save</button>
             </div>
           </div>
         </form>
@@ -233,7 +233,7 @@ const ScheduleEditor = () => {
       }
     };
     fetchTeacherData();
-    // Fetch dynamic options
+      
     const fetchOptions = async () => {
       setOptionsLoading(true);
       try {
@@ -242,7 +242,7 @@ const ScheduleEditor = () => {
           api.get('/api/schedules/classes'),
           api.get('/api/schedules/sections'),
         ]);
-        // Sort the options before setting state
+
         const sortedSubjects = (subjectsRes.data.subjects || []).sort();
         const sortedClasses = (classesRes.data.classes || []).sort((a, b) => a - b);
         const sortedSections = (sectionsRes.data.sections || []).sort();
@@ -261,7 +261,7 @@ const ScheduleEditor = () => {
     fetchOptions();
   }, [teacherId]);
 
-  // --- Data Transformation for Grid View ---
+
   const scheduleMatrix = React.useMemo(() => {
     const baseSchedule = schedule.reduce((acc, item) => {
       const day = weekdayMap[item.weekday];
@@ -285,7 +285,7 @@ const ScheduleEditor = () => {
     });
     return baseSchedule;
   }, [schedule, pendingChanges, weekdayMap]);
-  // --- End Transformation ---
+
 
   const handleCellClick = (day, periodIndex) => {
     const existingSlot = scheduleMatrix[day]?.[periodIndex];
@@ -317,7 +317,6 @@ const ScheduleEditor = () => {
     };
 
     setPendingChanges(prev => {
-      // If deleting a slot that was just created locally, just remove it from pending.
       if (slotData.status === 'new') {
         return prev.filter(p => !(p.weekday === change.weekday && p.periodIndex === change.periodIndex));
       }
@@ -370,30 +369,20 @@ const ScheduleEditor = () => {
     setToast('Changes discarded.');
   };
 
-  // When a new value is added, add it to the options for the current session
-  // useEffect(() => {
-  //   if (subject && addingSubject && !subjectOptions.includes(subject)) {
-  //     subjectOptions.push(subject);
-  //   }
-  //   if (classNum && addingClass && !classOptions.includes(classNum)) {
-  //     classOptions.push(classNum);
-  //   }
-  //   if (section && addingSection && !sectionOptions.includes(section)) {
-  //     sectionOptions.push(section);
-  //   }
-  // }, [subject, classNum, section]);
-  
-
   if (loading) {
-    return <p className="text-center p-8">Loading schedule editor...</p>;
+    return <div className="flex items-center justify-center min-h-[400px] p-4">
+      <p className="text-center text-gray-600">Loading schedule editor...</p>
+    </div>;
   }
 
   if (error) {
-    return <p className="text-center p-8 text-red-500">{error}</p>;
+    return <div className="flex items-center justify-center min-h-[400px] p-4">
+      <p className="text-center text-red-500">{error}</p>
+    </div>;
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <Toast message={toast} onClose={() => setToast('')} />
       <ScheduleSlotModal 
         isOpen={isModalOpen}
@@ -407,91 +396,159 @@ const ScheduleEditor = () => {
         optionsLoading={optionsLoading}
       />
 
-      <div className="flex items-center mb-4">
-        <button
-          onClick={() => navigate('/admin/manage-teachers')}
-          className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 mr-4"
-        >
-          <FiArrowLeft className="mr-2" /> Back
-        </button>
-        <h1 className="text-3xl font-bold text-gray-800 flex-1">Back</h1>
-        {pendingChanges.length > 0 && (
-          <div className="flex items-center gap-4">
+      {/* Header Section */}
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 flex-1">
             <button
-              onClick={handleBatchSave}
-              disabled={isSaving}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-300"
+              onClick={() => navigate('/admin/manage-teachers')}
+              className="flex items-center px-3 py-2 sm:px-4 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm sm:text-base"
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              <FiArrowLeft className="mr-2 w-4 h-4" /> Back
             </button>
-            <button
-              onClick={handleDiscardChanges}
-              disabled={isSaving}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100"
-            >
-              Discard Changes
-            </button>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Schedule Editor</h1>
           </div>
-        )}
-      </div>
-      <p className="text-lg text-gray-600 mb-2">Managing schedule for: <span className="font-semibold">{teacher?.name}</span></p>
-      <p className="text-sm text-gray-500 mb-8">Last updated: {lastUpdated ? lastUpdated.toLocaleString() : 'N/A'}</p>
+          
+          {/* Action Buttons */}
+          {pendingChanges.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto">
+              <button
+                onClick={handleBatchSave}
+                disabled={isSaving}
+                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-300 text-sm sm:text-base"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                onClick={handleDiscardChanges}
+                disabled={isSaving}
+                className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 text-sm sm:text-base"
+              >
+                Discard Changes
+              </button>
+            </div>
+          )}
+        </div>
 
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="overflow-x-auto p-6">
-          <div
-            className="grid gap-px"
-            style={{ gridTemplateColumns: `100px repeat(5, 1fr)`, minWidth: '800px' }} // Display Mon-Fri
-          >
-            {/* Top-left empty cell */}
-            <div className="bg-gray-50 p-3 rounded-tl-lg"></div>
+        {/* Teacher Info */}
+        <div className="mb-6 space-y-2">
+          <p className="text-base sm:text-lg text-gray-600">
+            Managing schedule for: <span className="font-semibold">{teacher?.name}</span>
+          </p>
+          <p className="text-xs sm:text-sm text-gray-500">
+            Last updated: {lastUpdated ? lastUpdated.toLocaleString() : 'N/A'}
+          </p>
+        </div>
 
-            {/* Day headers */}
-            {weekdayMap.slice(1, 6).map(day => (
-              <div key={day} className="bg-gray-50 text-center font-semibold p-3">
-                {day}
-              </div>
-            ))}
+        {/* Schedule Grid */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="p-4 sm:p-6">
+              {/* Desktop Grid View */}
+              <div className="hidden lg:block">
+                <div
+                  className="grid gap-px bg-gray-200 rounded-lg overflow-hidden"
+                  style={{ gridTemplateColumns: `120px repeat(5, 1fr)`, minWidth: '800px' }}
+                >
+                  {/* Top-left empty cell */}
+                  <div className="bg-gray-50 p-4 font-semibold text-center"></div>
 
-            {/* Grid rows */}
-            {periods.map(periodIndex => (
-              <React.Fragment key={periodIndex}>
-                {/* Period header */}
-                <div className="bg-gray-50 text-center font-semibold p-3 flex items-center justify-center">
-                  Period {periodIndex}
-                </div>
-
-                {/* Schedule cells */}
-                {weekdayMap.slice(1, 6).map(day => {
-                  const slot = scheduleMatrix[day]?.[periodIndex];
-                  return (
-                    <div
-                      key={`${day}-${periodIndex}`}
-                      onClick={() => handleCellClick(day, periodIndex)}
-                      className={`relative p-3 border-t border-l border-gray-200 min-h-[100px] transition-colors cursor-pointer ${
-                        slot?.status === 'deleted' ? 'bg-red-100 hover:bg-red-200' : 'bg-white hover:bg-indigo-50'
-                      }`}
-                    >
-                      {slot && slot.status !== 'deleted' ? (
-                        <div>
-                          <p className="font-semibold text-sm text-indigo-800">{slot.subject}</p>
-                          <p className="text-xs text-gray-600 mt-1">Class: {slot.classSection}</p>
-                          {slot.status === 'new' && <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full" title="New"></span>}
-                          {slot.status === 'updated' && <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full" title="Modified"></span>}
-                        </div>
-                      ) : (
-                        <div className="text-gray-300 flex items-center justify-center h-full">+</div>
-                      )}
-                      {slot?.status === 'deleted' && (
-                        <div className="text-red-500 flex items-center justify-center h-full line-through">
-                          Deleted
-                        </div>
-                      )}
+                  {/* Day headers */}
+                  {weekdayMap.slice(1, 6).map(day => (
+                    <div key={day} className="bg-gray-50 text-center font-semibold p-4">
+                      {day}
                     </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
+                  ))}
+
+                  {/* Grid rows */}
+                  {periods.map(periodIndex => (
+                    <React.Fragment key={periodIndex}>
+                      {/* Period header */}
+                      <div className="bg-gray-50 text-center font-semibold p-4 flex items-center justify-center">
+                        Period {periodIndex}
+                      </div>
+
+                      {/* Schedule cells */}
+                      {weekdayMap.slice(1, 6).map(day => {
+                        const slot = scheduleMatrix[day]?.[periodIndex];
+                        return (
+                          <div
+                            key={`${day}-${periodIndex}`}
+                            onClick={() => handleCellClick(day, periodIndex)}
+                            className={`relative p-4 min-h-[120px] transition-colors cursor-pointer ${
+                              slot?.status === 'deleted' 
+                                ? 'bg-red-100 hover:bg-red-200' 
+                                : 'bg-white hover:bg-indigo-50'
+                            }`}
+                          >
+                            {slot && slot.status !== 'deleted' ? (
+                              <div>
+                                <p className="font-semibold text-sm text-indigo-800 mb-1">{slot.subject}</p>
+                                <p className="text-xs text-gray-600">Class: {slot.classSection}</p>
+                                {slot.status === 'new' && <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full" title="New"></span>}
+                                {slot.status === 'updated' && <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full" title="Modified"></span>}
+                              </div>
+                            ) : (
+                              <div className="text-gray-300 flex items-center justify-center h-full text-2xl">+</div>
+                            )}
+                            {slot?.status === 'deleted' && (
+                              <div className="text-red-500 flex items-center justify-center h-full line-through text-sm">
+                                Deleted
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile/Tablet Card View */}
+              <div className="lg:hidden space-y-6">
+                {weekdayMap.slice(1, 6).map(day => (
+                  <div key={day} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <h3 className="font-semibold text-gray-800">{day}</h3>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {periods.map(periodIndex => {
+                        const slot = scheduleMatrix[day]?.[periodIndex];
+                        return (
+                          <div
+                            key={`${day}-${periodIndex}`}
+                            onClick={() => handleCellClick(day, periodIndex)}
+                            className={`p-3 rounded-md border-2 border-dashed transition-colors cursor-pointer ${
+                              slot?.status === 'deleted'
+                                ? 'border-red-300 bg-red-50'
+                                : slot && slot.status !== 'deleted'
+                                ? 'border-indigo-300 bg-indigo-50'
+                                : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-600">Period {periodIndex}</span>
+                              {slot?.status === 'new' && <span className="w-2 h-2 bg-blue-500 rounded-full" title="New"></span>}
+                              {slot?.status === 'updated' && <span className="w-2 h-2 bg-yellow-500 rounded-full" title="Modified"></span>}
+                            </div>
+                            {slot && slot.status !== 'deleted' ? (
+                              <div>
+                                <p className="font-semibold text-indigo-800 text-sm">{slot.subject}</p>
+                                <p className="text-xs text-gray-600 mt-1">Class: {slot.classSection}</p>
+                              </div>
+                            ) : slot?.status === 'deleted' ? (
+                              <p className="text-red-500 text-sm line-through">Deleted</p>
+                            ) : (
+                              <p className="text-gray-400 text-sm">Tap to add class</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -499,4 +556,4 @@ const ScheduleEditor = () => {
   );
 };
 
-export default ScheduleEditor; 
+export default ScheduleEditor;

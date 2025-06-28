@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import { FiCheckCircle, FiXCircle, FiClock, FiUsers, FiAlertCircle, FiCalendar, FiUser, FiMessageSquare } from 'react-icons/fi';
-import ActionConfirmationModal from '../../components/ui/ActionConfirmationModal';
 import Toast from '../../components/ui/Toast';
 
 const StatusBadge = ({ status, isMobile = false }) => {
@@ -49,13 +48,9 @@ const ManageLeaves = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [actionType, setActionType] = useState('');
-
   const [toast, setToast] = useState({ message: '', type: '' });
   const [isGeneratingSubstitutions, setIsGeneratingSubstitutions] = useState(false);
+  const [processingRequests, setProcessingRequests] = useState(new Map()); // Map of requestId -> action type
 
   useEffect(() => {
     const fetchLeaveRequests = async () => {
@@ -74,12 +69,6 @@ const ManageLeaves = () => {
 
     fetchLeaveRequests();
   }, []);
-
-  const handleActionClick = (request, type) => {
-    setSelectedRequest(request);
-    setActionType(type);
-    setIsModalOpen(true);
-  };
 
   const generateSubstitutionsForApprovedLeave = async (leaveRequest) => {
     try {
@@ -119,14 +108,16 @@ const ManageLeaves = () => {
     }
   };
 
-  const handleConfirmAction = async (comment) => {
-    if (!selectedRequest || !actionType) return;
-
-    const leaveId = selectedRequest._id;
-    const endpoint = `/api/leaves/${leaveId}/${actionType}`;
+  const handleApproveLeave = async (request) => {
+    const leaveId = request._id;
+    
+    // Prevent multiple clicks
+    if (processingRequests.has(leaveId)) return;
+    
+    setProcessingRequests(prev => new Map(prev).set(leaveId, 'approve'));
 
     try {
-      const response = await api.put(endpoint, { adminComment: comment });
+      const response = await api.put(`/api/leaves/${leaveId}/approve`, { adminComment: '' });
       const updatedLeaveRequest = response.data.leaveRequest;
 
       // Update the UI
@@ -136,25 +127,51 @@ const ManageLeaves = () => {
         )
       );
 
-      // If approved, generate substitutions automatically
-      if (actionType === 'approve') {
-        await generateSubstitutionsForApprovedLeave(updatedLeaveRequest);
-      } else {
-        setToast({ message: `Leave request was not approved.`, type: 'info' });
-      }
+      // Generate substitutions automatically
+      await generateSubstitutionsForApprovedLeave(updatedLeaveRequest);
 
     } catch (err) {
-      console.error(`Failed to ${actionType} leave request:`, err);
-      
-      const friendlyMessage = actionType === 'approve' 
-        ? 'Failed to approve the leave request. Please try again.'
-        : 'Failed to process the leave request. Please try again.';
-      
-      setToast({ message: friendlyMessage, type: 'error' });
+      console.error('Failed to approve leave request:', err);
+      setToast({ message: 'Failed to approve the leave request. Please try again.', type: 'error' });
     } finally {
-      setIsModalOpen(false);
-      setSelectedRequest(null);
-      setActionType('');
+      setProcessingRequests(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(leaveId);
+        return newMap;
+      });
+    }
+  };
+
+  const handleRejectLeave = async (request) => {
+    const leaveId = request._id;
+    
+    // Prevent multiple clicks
+    if (processingRequests.has(leaveId)) return;
+    
+    setProcessingRequests(prev => new Map(prev).set(leaveId, 'reject'));
+
+    try {
+      const response = await api.put(`/api/leaves/${leaveId}/reject`, { adminComment: '' });
+      const updatedLeaveRequest = response.data.leaveRequest;
+
+      // Update the UI
+      setLeaveRequests(prev =>
+        prev.map(req =>
+          req._id === leaveId ? updatedLeaveRequest : req
+        )
+      );
+
+      setToast({ message: 'Leave request has been declined.', type: 'info' });
+
+    } catch (err) {
+      console.error('Failed to reject leave request:', err);
+      setToast({ message: 'Failed to process the leave request. Please try again.', type: 'error' });
+    } finally {
+      setProcessingRequests(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(leaveId);
+        return newMap;
+      });
     }
   };
 
@@ -190,24 +207,6 @@ const ManageLeaves = () => {
         message={toast.message} 
         type={toast.type}
         onClose={() => setToast({ message: '', type: '' })} 
-      />
-      <ActionConfirmationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmAction}
-        title={actionType === 'approve' ? 'Approve Teacher Leave' : 'Decline Teacher Leave'}
-        message={
-          actionType === 'approve' 
-            ? `Approve leave for ${selectedRequest?.teacherId?.name || 'this teacher'}? We'll automatically arrange coverage for their classes.`
-            : `Decline leave request for ${selectedRequest?.teacherId?.name || 'this teacher'}?`
-        }
-        confirmButtonText={actionType === 'approve' ? 'Approve & Arrange Coverage' : 'Decline Request'}
-        confirmButtonClass={
-          actionType === 'approve'
-            ? 'bg-green-600 hover:bg-green-700'
-            : 'bg-red-600 hover:bg-red-700'
-        }
-        showComment={true}
       />
 
       {/* Loading overlay for substitution generation */}
@@ -306,6 +305,9 @@ const ManageLeaves = () => {
                       const fromDate = new Date(request.fromDate).toLocaleDateString();
                       const toDate = new Date(request.toDate).toLocaleDateString();
                       const dateRange = fromDate === toDate ? fromDate : `${fromDate} - ${toDate}`;
+                      const isApproving = processingRequests.get(request._id) === 'approve';
+                      const isRejecting = processingRequests.get(request._id) === 'reject';
+                      const isProcessing = isApproving || isRejecting;
                       
                       return (
                         <tr key={request._id} className="border-b hover:bg-gray-50 transition-colors">
@@ -324,16 +326,32 @@ const ManageLeaves = () => {
                             {request.status === 'pending' && (
                               <div className="flex justify-end space-x-2">
                                 <button 
-                                  onClick={() => handleActionClick(request, 'approve')} 
-                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
+                                  onClick={() => handleApproveLeave(request)} 
+                                  disabled={isProcessing}
+                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                 >
-                                  Approve
+                                  {isApproving ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                      Approving...
+                                    </>
+                                  ) : (
+                                    'Approve'
+                                  )}
                                 </button>
                                 <button 
-                                  onClick={() => handleActionClick(request, 'reject')} 
-                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium transition-colors"
+                                  onClick={() => handleRejectLeave(request)} 
+                                  disabled={isProcessing}
+                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                 >
-                                  Decline
+                                  {isRejecting ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                      Declining...
+                                    </>
+                                  ) : (
+                                    'Decline'
+                                  )}
                                 </button>
                               </div>
                             )}
@@ -368,6 +386,9 @@ const ManageLeaves = () => {
                   const fromDate = new Date(request.fromDate).toLocaleDateString();
                   const toDate = new Date(request.toDate).toLocaleDateString();
                   const dateRange = fromDate === toDate ? fromDate : `${fromDate} - ${toDate}`;
+                  const isApproving = processingRequests.get(request._id) === 'approve';
+                  const isRejecting = processingRequests.get(request._id) === 'reject';
+                  const isProcessing = isApproving || isRejecting;
                   
                   return (
                     <div key={request._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -413,16 +434,32 @@ const ManageLeaves = () => {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                           <div className="flex gap-3">
                             <button 
-                              onClick={() => handleActionClick(request, 'approve')} 
-                              className="flex-1 py-2.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors active:bg-green-700"
+                              onClick={() => handleApproveLeave(request)} 
+                              disabled={isProcessing}
+                              className="flex-1 py-2.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
-                              Approve
+                              {isApproving ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                  Approving...
+                                </>
+                              ) : (
+                                'Approve'
+                              )}
                             </button>
                             <button 
-                              onClick={() => handleActionClick(request, 'reject')} 
-                              className="flex-1 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors active:bg-red-700"
+                              onClick={() => handleRejectLeave(request)} 
+                              disabled={isProcessing}
+                              className="flex-1 py-2.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors active:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
-                              Decline
+                              {isRejecting ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                  Declining...
+                                </>
+                              ) : (
+                                'Decline'
+                              )}
                             </button>
                           </div>
                         </div>

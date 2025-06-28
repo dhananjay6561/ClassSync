@@ -1,5 +1,5 @@
 import React from 'react';
-import TeacherList from './components/TeacherList'; // Assuming TeacherList is in a sub-directory
+import TeacherList from './components/TeacherList';
 import { FiArrowLeft } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
