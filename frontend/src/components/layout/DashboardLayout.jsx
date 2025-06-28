@@ -6,6 +6,7 @@ import {
   FiUsers, FiCalendar, FiRepeat, FiBookOpen, FiClipboard, FiInfo,
   FiMenu, FiX
 } from 'react-icons/fi';
+import logo from '../../logo.svg';
 
 const Dummy = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -77,8 +78,17 @@ const DashboardLayout = ({ children }) => {
       <aside className="hidden md:flex w-64 flex-shrink-0 bg-white border-r border-gray-200 flex-col justify-between">
         <div>
           <div className="h-16 flex items-center justify-center border-b border-gray-100">
-            <NavLink to="/" className="text-2xl font-bold text-indigo-600 tracking-tight">ClassSync</NavLink>
-          </div>
+  <div
+    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow hover:scale-110 hover:rotate-6 transition-transform duration-300 ease-in-out cursor-pointer"
+    title="ClassSync"
+  >
+    <img
+      src={logo}
+      alt="ClassSync Logo"
+      className="w-full h-full object-contain rounded-full"
+    />
+  </div>
+</div>
           <nav className="mt-6 flex flex-col gap-1 px-4">{renderNavLinks()}</nav>
         </div>
         <div className="p-4 border-t border-gray-100 flex items-center gap-3">
@@ -101,7 +111,18 @@ const DashboardLayout = ({ children }) => {
           <div className="w-64 bg-white shadow-lg flex flex-col justify-between border-r border-gray-200">
             <div>
               <div className="h-16 flex items-center justify-between px-4 border-b">
-                <NavLink to="/" className="text-2xl font-bold text-indigo-600 tracking-tight">ClassSync</NavLink>
+                <div className="h-16 flex items-center justify-center border-b border-gray-100">
+  <div
+    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow hover:scale-110 hover:rotate-6 transition-transform duration-300 ease-in-out cursor-pointer"
+    title="ClassSync"
+  >
+    <img
+      src={logo}
+      alt="ClassSync Logo"
+      className="w-full h-full object-contain rounded-full"
+    />
+  </div>
+</div>
                 <button onClick={() => setSidebarOpen(false)}>
                   <FiX size={24} className="text-gray-600" />
                 </button>

@@ -3,7 +3,7 @@ import { Mail, Lock, GraduationCap, Shield } from 'lucide-react';
 import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import logo from '../../logo.svg';
+import logo from '../../../public/logo.svg';
 
 
 const demoUsers = [
@@ -73,13 +73,15 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl border-0 overflow-hidden">
         <div className="p-6 sm:p-8">
+          {/* App Icon */}
           <div className="flex justify-center mb-6 sm:mb-8">
-  <img
-    src="logo.svg"
-    alt="App Logo"
-    className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-xl shadow-lg"
-  />
-</div>
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 border-2 border-white rounded-full relative">
+                <div className="absolute inset-1 border border-white rounded-full"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
 
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
