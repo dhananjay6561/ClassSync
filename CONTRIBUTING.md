@@ -108,6 +108,7 @@ git commit -m "Fix: correct navbar overflow on mobile"
 
 - Ask in the **GSSoC Discord** or discussion forums.
 - Open an **Issue** in this repo if you're stuck.
+- Join our [WhatsApp group](https://chat.whatsapp.com/BtIx4es09GfDAJpAFDFK56?mode=ac_t)
 
 ---
 
