@@ -2,7 +2,7 @@ const cluster = require('cluster');
 const os = require('os');
 
 if (cluster.isMaster) {
-  const numCPUs = os.cpus().length; // On your machine = 12
+  const numCPUs = os.cpus().length; 
   console.log(`Master ${process.pid} is running`);
   console.log(`Spawning ${numCPUs} workers...`);
 
@@ -35,4 +35,4 @@ if (cluster.isMaster) {
 
 // This code initializes the server by importing the app from the src/app module
 // and starting it on the specified port. It logs a message to the console when the server
-// is successfully running. The port defaults to 5000 if not specified in the environment variables
+// is successfully running. The port defaults to 5000 if not specified in the environment variablesmn mm;l ;.wwwwwwwwwwwwwwwwws
